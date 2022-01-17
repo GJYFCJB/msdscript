@@ -1,8 +1,5 @@
 //
-//  cmdline.hpp
-//  msdscript
-//
-//  Created by 谷金 on 1/11/22.
+// Created by 谷金 on 1/16/22.
 //
 
 #ifndef cmdline_hpp
