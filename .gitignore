@@ -1,0 +1,9 @@
+cmake-build-debug/
+CMakeLists.txt
+.DS_Store
+cmdline.o
+.idea/
+make
+.
+..
+.git
