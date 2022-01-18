@@ -25,6 +25,7 @@ int use_arguments(int argc, char **argv)
             //help command input
             if (argv[i] == s1) {
                 cout << "loading the help function, please wait...." << endl;
+                Catch::Session().run(1, argv);
                 exit(0);
             }
                 //test command input
@@ -50,7 +51,7 @@ int use_arguments(int argc, char **argv)
 
 int main(int argc,char **argv){
     use_arguments(argc, argv);
-    Catch::Session().run(1, argv);
+
 return 0;
 
 }

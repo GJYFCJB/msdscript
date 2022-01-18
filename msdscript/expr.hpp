@@ -46,6 +46,16 @@ public:
     bool equals(expr *e);
 };
 
+class Variable : public expr{
+public:
+    string s;
+
+    Variable(string input);
+
+    bool equals(expr *e);
+
+};
+
 //class Car : public expr {
 //public:
 //    string brand;

@@ -54,6 +54,18 @@ bool Mult::equals(expr *e) {
         ));
 }
 
+Variable::Variable(string input) {
+    this -> s = input;
+}
+
+bool Variable::equals(expr *e) {
+    Variable *t = dynamic_cast<Variable*>(e);
+    if (t == NULL)
+        return false;
+    else
+        return (this->s == t->s);
+}
+
 //bool Car::equals(Car *a) {
 //
 //    Car *t = dynamic_cast<Car*>(a);
@@ -73,8 +85,10 @@ bool Mult::equals(expr *e) {
 //}
 
 TEST_CASE("equals"){
-    int tar = 3;
+
     Num n1(3);
+    Variable v1("Jin");
+
 
     expr *f1 = new Num(2);
     expr *f2 = new Num(3);
@@ -87,6 +101,8 @@ TEST_CASE("equals"){
     expr *e3 = new Add(f3,f4);
     expr *e4 = new Mult(f3,f4);
     expr *e5 = new Mult(f3,f3);
+    expr *e6 = new Variable("Jin");
+    expr *e7 = new Variable("Jia");
 
 
     Add a1(f1, f2);
@@ -96,14 +112,33 @@ TEST_CASE("equals"){
     //test expression Num
     CHECK(n1.equals(e0));
     CHECK(!n1.equals(e1));
+    CHECK(!n1.equals(e2));
+    CHECK(!n1.equals(e4));
+    CHECK(!n1.equals(e7));
 
     //test expression Add
     CHECK(a1.equals(e2));
     CHECK(!a1.equals(e3));
+    CHECK(!a1.equals(e1));
+    CHECK(!a1.equals(e5));
+    CHECK(!a1.equals(e7));
+
 
     //test expression Muti
     CHECK(m1.equals(e4));
     CHECK(!m1.equals(e5));
     CHECK(!m1.equals(e3));
+    CHECK(!m1.equals(e0));
+    CHECK(!m1.equals(e7));
+
+    //test expression Variable
+    CHECK(v1.equals(e6));
+    CHECK(!v1.equals(e7));
+    CHECK(!v1.equals(e1));
+    CHECK(!v1.equals(e2));
+    CHECK(!v1.equals(e3));
+    CHECK(!v1.equals(e4));
+
+
 
 }
