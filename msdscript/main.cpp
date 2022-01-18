@@ -5,9 +5,13 @@
 //  Created by 谷金 on 1/11/22.
 //
 
-#include "cmdline.hpp"
 #include <iostream>
+#define CATCH_CONFIG_RUNNER
+#include "catch.hpp"
+#include "expr.cpp"
+#include "main.hpp"
 using namespace std;
+
 
 string s1 = "--help";
 string s2 = "--test";
@@ -46,5 +50,7 @@ int use_arguments(int argc, char **argv)
 
 int main(int argc,char **argv){
     use_arguments(argc, argv);
-}
+    Catch::Session().run(1, argv);
+return 0;
 
+}
