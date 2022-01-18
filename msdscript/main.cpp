@@ -4,12 +4,11 @@
 //
 //  Created by 谷金 on 1/11/22.
 //
-
-#include <iostream>
 #define CATCH_CONFIG_RUNNER
-#include "catch.hpp"
-#include "expr.cpp"
+#include <iostream>
+#include "expr.hpp"
 #include "main.hpp"
+#include "catch.hpp"
 using namespace std;
 
 
@@ -25,13 +24,13 @@ int use_arguments(int argc, char **argv)
             //help command input
             if (argv[i] == s1) {
                 cout << "loading the help function, please wait...." << endl;
-                Catch::Session().run(1, argv);
+
                 exit(0);
             }
                 //test command input
             else if (argv[i] == s2) {
                 if (!isTest) {
-                    cout << "Tests passed.\n";
+                    Catch::Session().run(1, argv);
                     isTest = true;
                 } else {
                     cerr << "Has tested before." << endl;
