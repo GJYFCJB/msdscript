@@ -502,7 +502,7 @@ namespace Catch {
     struct SourceLineInfo {
 
         SourceLineInfo() = delete;
-        SourceLineInfo( char const* _file, std::size_t _line ) noexcept
+        SourceLineInfo( char const* _file, std::size_t _line )noexcept
         :   file( _file ),
             line( _line )
         {}
