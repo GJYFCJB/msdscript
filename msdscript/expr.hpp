@@ -16,6 +16,7 @@ class expr{
 public:
     virtual bool equals(expr *e) = 0;
     virtual int interp() = 0;
+    virtual bool interp_() =0;
     virtual bool has_variable() = 0;
     virtual expr* subst(string s1, expr *e) = 0;
 };
@@ -29,6 +30,8 @@ public:
     bool equals(expr *e);
 
     int interp();
+
+    bool interp_();
 
     bool has_variable();
 
@@ -46,6 +49,8 @@ public:
 
     int interp();
 
+    bool interp_();
+
     bool has_variable();
 
     expr* subst(string s1, expr *e);
@@ -62,6 +67,8 @@ public:
 
     int interp();
 
+    bool interp_();
+
     bool has_variable();
 
     expr* subst(string s1, expr *e);
@@ -76,6 +83,8 @@ public:
     bool equals(expr *e);
 
     int interp();
+
+    bool interp_();
 
     bool has_variable();
 

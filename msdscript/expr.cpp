@@ -28,6 +28,10 @@ int Num::interp(){
     return this->val;
 }
 
+bool Num::interp_(){
+    return true;
+}
+
 bool Num::has_variable(){
 
     return false;
@@ -53,10 +57,18 @@ bool Add::equals(expr *e) {
 }
 
 int Add::interp() {
-    Num *l = dynamic_cast<Num*>(this->lhs);
-    Num *r = dynamic_cast<Num*>(this->rhs);
-    if (l == NULL || r == NULL) return 0;
-    else return ((l->val) + (r->val));
+//Those methods should not use `dynamic_cast` (which should only be used in `equals`)
+    // You should recur to `interp` for `lhs` and `rhs`, instead.
+//    Num *l = dynamic_cast<Num*>(this->lhs);
+//    Num *r = dynamic_cast<Num*>(this->rhs);
+    if(this->rhs!=NULL && this->lhs!=NULL && this->interp_())
+        return (this->rhs->interp() + this->lhs->interp());
+    else(throw std::runtime_error("Variable has no value"));
+    return 0;
+}
+
+bool Add::interp_(){
+    return (this->rhs->interp_()&&this->lhs->interp_());
 }
 
 bool Add::has_variable(){
@@ -65,8 +77,15 @@ bool Add::has_variable(){
 }
 
 expr* Add::subst(string s1, expr *e){
-//    Variable *v = new Variable(s1);
-    return new Add(e,this->rhs);
+    Variable *v = new Variable(s1);
+
+    if(this->lhs->equals(v)){
+        this->lhs = e;
+    }
+    //recursion
+    else this->lhs->subst(s1,e);
+
+    return this;
 }
 
 //Class Mult--------------------------------------------------------------------------
@@ -85,10 +104,16 @@ bool Mult::equals(expr *e) {
 }
 
 int Mult::interp() {
-    Num *l = dynamic_cast<Num*>(this->lhs);
-    Num *r = dynamic_cast<Num*>(this->rhs);
-    if (l == NULL || r == NULL) return 0;
-    else return ((l->val) * (r->val));
+//    Num *l = dynamic_cast<Num*>(this->lhs);
+//    Num *r = dynamic_cast<Num*>(this->rhs);
+    if(this->rhs!=NULL && this->lhs!=NULL && this->interp_())
+        return (this->rhs->interp() * this->lhs->interp());
+    else(throw std::runtime_error("Variable has no value"));
+    return 0;
+}
+
+bool Mult::interp_(){
+    return (this->rhs->interp_()&&this->lhs->interp_());
 }
 
 bool Mult::has_variable(){
@@ -97,8 +122,13 @@ bool Mult::has_variable(){
 }
 
 expr* Mult::subst(string s1, expr *e){
+    Variable *v = new Variable(s1);
+    if(this->lhs->equals(v)){
+        this->lhs = e;
+    }
+    else this->lhs->subst(s1,e);
 
-    return new Mult(e,this->rhs);
+    return this;
 }
 
 //Class Variable--------------------------------------------------------------------------
@@ -116,6 +146,10 @@ bool Variable::equals(expr *e) {
 
 int Variable::interp(){
     throw std::runtime_error("Variable has no value");
+}
+
+bool Variable::interp_() {
+    return false;
 }
 
 bool Variable::has_variable(){
@@ -154,10 +188,6 @@ TEST_CASE("equals"){
 
     Mult m1(f3,f4);
 
-    int res_Num = n1.interp();
-    int res_Add = a1.interp();
-    int res_Mult = m1.interp();
-
     //test expression Num
     CHECK(n1.equals(e0));
     CHECK(!n1.equals(e1));
@@ -186,12 +216,35 @@ TEST_CASE("equals"){
     CHECK(!v1.equals(e2));
     CHECK(!v1.equals(e3));
     CHECK(!v1.equals(e4));
-
+}
+TEST_CASE("interp"){
+    Num n1(3);
+    Variable v1("Jin");
+    expr *f1 = new Num(2);
+    expr *f2 = new Num(3);
+    expr *f3 = new Num(4);
+    expr *f4 = new Num(5);
+    Add a1(f1, f2);
+    Mult m1(f3,f4);
+    int res_Num = n1.interp();
+    int res_Add = a1.interp();
+    int res_Mult = m1.interp();
+    expr *f5 = new Add((new Variable("s")),
+            (new Num(1)));
+    expr *f6 = new Mult((new Variable("s")),
+                       (new Num(1)));
     //test interp
     CHECK(res_Num==3);
     CHECK(res_Add==5);
     CHECK(res_Mult==20);
+    CHECK_THROWS_WITH(f5->interp(),"Variable has no value" );
     CHECK_THROWS_WITH( v1.interp(), "Variable has no value" );
+    CHECK_THROWS_WITH(f6->interp(),"Variable has no value" );
+}
+
+
+TEST_CASE("has_variable"){
+
 
     //test has_variable
     CHECK((new Num(5))->has_variable()== false);
@@ -200,11 +253,20 @@ TEST_CASE("equals"){
     CHECK((new Add((new Num(3)),(new Num(1)))));
     CHECK((new Mult((new Num(3)),(new Num(1)))));
     CHECK(new Variable("s"));
-
+}
+TEST_CASE("subst"){
     //test subst
+
+    expr *add = new Add(new Add(new Variable("xyz"), new Num(10)), new Num(11));
+    expr *resAdd = new Add(new Add(new Num(20), new Num(10)), new Num(11));
+    expr *mut = new Mult(new Add(new Variable("xyz"), new Num(10)), new Num(11));
+    expr *resMut = new Mult(new Add(new Num(20), new Num(10)), new Num(11));
     CHECK( (new Add(new Variable("x"), new Num(7)))
                    ->subst("x", new Variable("y"))
                    ->equals(new Add(new Variable("y"), new Num(7))) );
+
+    CHECK(add->subst("xyz", new Num(20))->equals(resAdd));
+    CHECK(mut->subst("xyz", new Num(20))->equals(resMut));
 
     CHECK( (new Mult(new Variable("x"), new Num(7)))
                    ->subst("x", new Variable("y"))
