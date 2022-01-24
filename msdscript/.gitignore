@@ -5,5 +5,4 @@ CMakeLists.txt
 .DS_Store
 cmdline.o
 .idea
-make
 cmake-build-debug-coverage
