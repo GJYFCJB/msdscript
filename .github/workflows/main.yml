@@ -1,12 +1,12 @@
-name: Jin
+name: JIN
 
 on: [push]
 
-jobs:
+jobs: 
   build:
   
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v1
-    - name: Build and run tests
-      run: make test
+     runs-on: macos-latest
+     steps:
+     - uses: actions/checkout@v1
+     - name: Build and run tests
+       run: make test
