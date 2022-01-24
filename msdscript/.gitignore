@@ -6,4 +6,4 @@ CMakeLists.txt
 cmdline.o
 .idea
 cmake-build-debug-coverage
-/msdscript
+/msdscript/msdscript
