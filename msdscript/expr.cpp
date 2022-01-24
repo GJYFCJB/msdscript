@@ -5,11 +5,10 @@
 
 #include "expr.hpp"
 #include<iostream>
-#include "catch.hpp"
-#include<cstring>
 #include<stdexcept>
 
 using namespace std;
+
 //override pure virtual method of interface
 //Class Num--------------------------------------------------------------------------
 Num::Num(int val){

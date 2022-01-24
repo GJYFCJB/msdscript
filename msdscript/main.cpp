@@ -4,11 +4,10 @@
 //
 //  Created by 谷金 on 1/11/22.
 //
-#define CATCH_CONFIG_RUNNER
+
 #include <iostream>
-#include "expr.hpp"
 #include "main.hpp"
-#include "catch.hpp"
+
 using namespace std;
 
 
@@ -50,7 +49,6 @@ int use_arguments(int argc, char **argv)
 
 int main(int argc,char **argv){
     use_arguments(argc, argv);
-
 return 0;
 
 }

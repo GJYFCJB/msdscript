@@ -4,14 +4,17 @@
 
 #ifndef expr_hpp
 #define expr_hpp
+#define CATCH_CONFIG_RUNNER
 #include <stdio.h>
 #include <iostream>
 #include <string>
 #include <cmath>
 #include <vector>
 #include <fstream>
+#include "catch.hpp"
 
 using namespace std;
+//int use_arguments(int argc, char **argv);
 class expr{
 public:
     virtual bool equals(expr *e) = 0;
@@ -92,4 +95,4 @@ public:
 };
 
 
-#endif //MSDSCRIPT_EXPR_HPP
+#endif //expr_hpp
