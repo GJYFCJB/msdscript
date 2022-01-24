@@ -1,6 +1,0 @@
-SRCS = main.cpp expr.cpp
-
-msdscript: $(SRCS) main.h
-	c++ --std=c++14 O2 -o msdscript $(SRCS)
-
-
