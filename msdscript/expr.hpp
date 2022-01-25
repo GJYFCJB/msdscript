@@ -22,6 +22,7 @@ public:
     virtual bool interp_() =0;
     virtual bool has_variable() = 0;
     virtual expr* subst(string s1, expr *e) = 0;
+    virtual void print(ostream &out) = 0;
 };
 
 class Num : public expr {
@@ -39,6 +40,8 @@ public:
     bool has_variable();
 
     expr* subst(string s1, expr *e);
+
+    void print(ostream &out);
 };
 
 class Add : public expr {
@@ -57,6 +60,8 @@ public:
     bool has_variable();
 
     expr* subst(string s1, expr *e);
+
+    void print(ostream &out);
 };
 
 class Mult : public expr {
@@ -75,6 +80,8 @@ public:
     bool has_variable();
 
     expr* subst(string s1, expr *e);
+
+    void print(ostream &out);
 };
 
 class Variable : public expr{
@@ -92,6 +99,8 @@ public:
     bool has_variable();
 
     expr* subst(string s1, expr *e);
+
+    void print(ostream &out);
 };
 
 

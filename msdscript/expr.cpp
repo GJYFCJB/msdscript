@@ -6,7 +6,7 @@
 #include "expr.hpp"
 #include<iostream>
 #include<stdexcept>
-
+#include <sstream>
 using namespace std;
 
 //override pure virtual method of interface
@@ -40,10 +40,16 @@ expr* Num::subst(string s1, expr *e){
     return 0;
 }
 
+void Num::print(ostream &out){
+    string s = to_string(this->val);
+    cout<<s;
+    out<<s<<"\n";
+}
+
 //Class Add--------------------------------------------------------------------------
 Add::Add(expr *lhs, expr *rhs) {
-this->lhs = lhs;
-this->rhs = rhs;
+    this->lhs = lhs;
+    this->rhs = rhs;
 }
 
 //override pure virtual method of interface
@@ -81,16 +87,20 @@ expr* Add::subst(string s1, expr *e){
     if(this->lhs->equals(v)){
         this->lhs = e;
     }
-    //recursion
+        //recursion
     else this->lhs->subst(s1,e);
 
     return this;
 }
 
+void Add::print(ostream &out){
+
+}
+
 //Class Mult--------------------------------------------------------------------------
 Mult::Mult(expr* lhs, expr *rhs) {
-this->lhs = lhs;
-this->rhs = rhs;
+    this->lhs = lhs;
+    this->rhs = rhs;
 }
 
 //override pure virtual method of interface
@@ -130,6 +140,10 @@ expr* Mult::subst(string s1, expr *e){
     return this;
 }
 
+void Mult::print(ostream &out){
+
+}
+
 //Class Variable--------------------------------------------------------------------------
 Variable::Variable(string input) {
     this -> s = input;
@@ -152,12 +166,16 @@ bool Variable::interp_() {
 }
 
 bool Variable::has_variable(){
-   return true;
+    return true;
 }
 
 expr* Variable::subst(string s1, expr *e){
 
     return 0;
+}
+
+void Variable::print(ostream &out){
+
 }
 
 /*
@@ -229,9 +247,9 @@ TEST_CASE("interp"){
     int res_Add = a1.interp();
     int res_Mult = m1.interp();
     expr *f5 = new Add((new Variable("s")),
-            (new Num(1)));
-    expr *f6 = new Mult((new Variable("s")),
                        (new Num(1)));
+    expr *f6 = new Mult((new Variable("s")),
+                        (new Num(1)));
     //test interp
     CHECK(res_Num==3);
     CHECK(res_Add==5);
@@ -272,4 +290,11 @@ TEST_CASE("subst"){
                    ->equals(new Mult(new Variable("y"), new Num(7))) );
 
 
+}
+
+TEST_CASE("print"){
+    stringstream out("");
+    expr *f1 = new Num(2);
+    f1->print(out);
+    CHECK( out.str() == "2");
 }
