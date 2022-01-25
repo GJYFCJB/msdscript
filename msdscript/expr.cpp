@@ -83,7 +83,7 @@ string Num::print(ostream &out){
     return str;
 }
 
-string Num::pretty_print(ostream &out){
+string Num::pretty_print(ostream &out,precedence_t p){
     stringstream ss;
     ss << this->val;
     string str = ss.str();
@@ -91,7 +91,7 @@ string Num::pretty_print(ostream &out){
     return str;
 }
 
-string Num::pretty_print_at(precedence_t){
+string Num::pretty_print_at(precedence_t p){
     return "";
 }
 
@@ -150,18 +150,24 @@ string Add::print(ostream &out){
     return "("+lhs->print(o)+ "+" +rhs->print(o)+")";
 }
 
-string Add::pretty_print(ostream &out){
-    stringstream o("");
-    precedence_t p;
-    string s1 = lhs->print(o);
-    string s2 = rhs->print(o);
-
-
-
+string Add::pretty_print(ostream &out,precedence_t p){
+    bool has_seen = false;
+    if(p == prec_mult || p == prec_add){
+        has_seen = true;
+    }
+    if(has_seen == true){
+        out<<"(";
+    }
+    lhs->pretty_print(out,prec_add);
+    out<<" + ";
+    rhs->pretty_print(out, prec_add);
+    if(has_seen == true){
+        out<<")";
+    }
+    return "";
 }
 
-string Add::pretty_print_at(precedence_t){
-    this->pretty_print_at(prec_add);
+string Add::pretty_print_at(precedence_t p){
     return "";
 }
 
@@ -216,14 +222,20 @@ string Mult::print(ostream &out){
     return "("+lhs->print(o)+ "*" +rhs->print(o)+")";
 }
 
-string Mult::pretty_print(ostream &out){
-    stringstream o("");
-    precedence_t p;
+string Mult::pretty_print(ostream &out,precedence_t p){
+    if(p == prec_mult){
+        out<<"(";
+    }
+    lhs->pretty_print(out,prec_mult);
+    out<<" * ";
+    rhs->pretty_print(out, prec_mult);
+    if(p == prec_mult){
+        out<<")";
+    }
     return "";
-
 }
 
-string Mult::pretty_print_at(precedence_t){
+string Mult::pretty_print_at(precedence_t p){
     return "";
 }
 
@@ -261,13 +273,12 @@ string Variable::print(ostream &out){
     return "";
 }
 
-string Variable::pretty_print(ostream &out){
-    stringstream o("");
-    precedence_t p;
+string Variable::pretty_print(ostream &outm, precedence_t p){
+
     return "";
 }
 
-string Variable::pretty_print_at(precedence_t){
+string Variable::pretty_print_at(precedence_t p){
     return "";
 }
 
@@ -385,7 +396,7 @@ TEST_CASE("subst"){
 
 }
 
-TEST_CASE("print"){
+TEST_CASE("print && pretty_print"){
     stringstream out("");
     expr *f1 = new Num(2);
     f1->print(out);
@@ -400,5 +411,27 @@ TEST_CASE("print"){
     expr *f3 = new Add(new Num(1), new Mult(new Num(2), new Num(3)));
     f3->print(out2);
     CHECK(out2.str() == "(1+(2*3))");
+
+    Num* num1 = new Num(1);
+    Num* num2 = new Num(2);
+    Num* num3 = new Num(3);
+    Mult* m0 = new Mult(num1,num2);
+    Mult* m2 = new Mult(m0,num3);
+
+    stringstream out5("");
+    m2->pretty_print(out5,prec_none);
+    CHECK(out5.str() == "(1 * 2) * 3");
+
+    Add* add = new Add(num1,m0);
+    std::stringstream out3("");
+    add->pretty_print(out3, prec_none);
+    CHECK(out3.str() == "1 + 1 * 2");
+
+    Add* add1 = new Add(num2,num3);
+    Mult* m3 = new Mult(num3,add1);
+    stringstream out4("");
+    m3->pretty_print(out4,prec_none);
+    CHECK(out4.str() == "3 * (2 + 3)");
+
 
 }
