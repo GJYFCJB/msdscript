@@ -1,6 +1,5 @@
 INCS = main.hpp expr.hpp
 OBJS = main.o
-#expr.o
 msdscript: $(OBJS)
 		c++ --std=c++14 -O2 -o msdscript $(OBJS)
 main.o: main.cpp $(INCS)
