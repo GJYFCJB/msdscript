@@ -7,3 +7,5 @@ cmdline.o
 .idea
 cmake-build-debug-coverage
 /msdscript
+main.o
+expr.o

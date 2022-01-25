@@ -43,6 +43,7 @@ int use_arguments(int argc, char **argv)
     }
     return 0;
 }
+
 //override pure virtual method of interface
 //Class Num--------------------------------------------------------------------------
 Num::Num(int val){
@@ -74,10 +75,24 @@ expr* Num::subst(string s1, expr *e){
     return 0;
 }
 
-void Num::print(ostream &out){
-    string s = to_string(this->val);
-    cout<<s;
-    out<<s<<"\n";
+string Num::print(ostream &out){
+    stringstream ss;
+    ss << this->val;
+    string str = ss.str();
+    out<<str;
+    return str;
+}
+
+string Num::pretty_print(ostream &out){
+    stringstream ss;
+    ss << this->val;
+    string str = ss.str();
+    out<<str;
+    return str;
+}
+
+string Num::pretty_print_at(precedence_t){
+    return "";
 }
 
 //Class Add--------------------------------------------------------------------------
@@ -103,7 +118,7 @@ int Add::interp() {
     if(this->rhs!=NULL && this->lhs!=NULL && this->interp_())
         return (this->rhs->interp() + this->lhs->interp());
     else(throw std::runtime_error("Variable has no value"));
-    return 0;
+
 }
 
 bool Add::interp_(){
@@ -127,8 +142,27 @@ expr* Add::subst(string s1, expr *e){
     return this;
 }
 
-void Add::print(ostream &out){
+string Add::print(ostream &out){
+    stringstream o("");
+    lhs->print(o);
+    rhs->print(o);
+    out<<"("+lhs->print(o)+ "+" +rhs->print(o)+")";
+    return "("+lhs->print(o)+ "+" +rhs->print(o)+")";
+}
 
+string Add::pretty_print(ostream &out){
+    stringstream o("");
+    precedence_t p;
+    string s1 = lhs->print(o);
+    string s2 = rhs->print(o);
+
+
+
+}
+
+string Add::pretty_print_at(precedence_t){
+    this->pretty_print_at(prec_add);
+    return "";
 }
 
 //Class Mult--------------------------------------------------------------------------
@@ -174,8 +208,23 @@ expr* Mult::subst(string s1, expr *e){
     return this;
 }
 
-void Mult::print(ostream &out){
+string Mult::print(ostream &out){
+    stringstream o("");
+    lhs->print(o);
+    rhs->print(o);
+    out<<"("+lhs->print(o)+ "*" +rhs->print(o)+")";
+    return "("+lhs->print(o)+ "*" +rhs->print(o)+")";
+}
 
+string Mult::pretty_print(ostream &out){
+    stringstream o("");
+    precedence_t p;
+    return "";
+
+}
+
+string Mult::pretty_print_at(precedence_t){
+    return "";
 }
 
 //Class Variable--------------------------------------------------------------------------
@@ -208,8 +257,18 @@ expr* Variable::subst(string s1, expr *e){
     return 0;
 }
 
-void Variable::print(ostream &out){
+string Variable::print(ostream &out){
+    return "";
+}
 
+string Variable::pretty_print(ostream &out){
+    stringstream o("");
+    precedence_t p;
+    return "";
+}
+
+string Variable::pretty_print_at(precedence_t){
+    return "";
 }
 
 /*
@@ -331,4 +390,15 @@ TEST_CASE("print"){
     expr *f1 = new Num(2);
     f1->print(out);
     CHECK( out.str() == "2");
+
+    stringstream out1("");
+    expr *f2 = new Add(new Num(1), new Add(new Num(2), new Num(3)));
+    f2->print(out1);
+    CHECK(out1.str() == "(1+(2+3))");
+
+    stringstream out2("");
+    expr *f3 = new Add(new Num(1), new Mult(new Num(2), new Num(3)));
+    f3->print(out2);
+    CHECK(out2.str() == "(1+(2*3))");
+
 }
