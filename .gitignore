@@ -7,5 +7,6 @@ make
 .docx
 ..
 .git
-expr.o
-main.o
+/msdscript/main.o
+/msdscript/expr.o
+/msdscript/msdscript

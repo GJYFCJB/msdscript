@@ -9,3 +9,4 @@ cmake-build-debug-coverage
 /msdscript
 main.o
 expr.o
+/msdscript/msdscript
