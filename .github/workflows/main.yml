@@ -1,4 +1,4 @@
-name: CI
+name: JIN
 
 on: [push]
 
