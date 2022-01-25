@@ -365,8 +365,6 @@ TEST_CASE("interp"){
 
 
 TEST_CASE("has_variable"){
-
-
     //test has_variable
     CHECK((new Num(5))->has_variable()== false);
     CHECK((new Add((new Variable("s")),(new Num(1)))));
@@ -432,6 +430,5 @@ TEST_CASE("print && pretty_print"){
     stringstream out4("");
     m3->pretty_print(out4,prec_none);
     CHECK(out4.str() == "3 * (2 + 3)");
-
 
 }
