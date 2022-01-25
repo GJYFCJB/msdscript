@@ -30,8 +30,8 @@ public:
     virtual bool has_variable() = 0;
     virtual expr* subst(string s1, expr *e) = 0;
     virtual string print(ostream &out) = 0;
-    virtual string pretty_print(ostream &out) = 0;
-    virtual string pretty_print_at(precedence_t) = 0;
+    virtual string pretty_print(ostream &out,precedence_t p) = 0;
+    virtual string pretty_print_at(precedence_t p) = 0;
 };
 
 class Num : public expr {
@@ -52,9 +52,9 @@ public:
 
     string print(ostream &out);
 
-    string pretty_print(ostream &out);
+    string pretty_print(ostream &out,precedence_t p);
 
-    string pretty_print_at(precedence_t);
+    string pretty_print_at(precedence_t p);
 };
 
 class Add : public expr {
@@ -76,9 +76,9 @@ public:
 
     string print(ostream &out);
 
-    string pretty_print(ostream &out);
+    string pretty_print(ostream &out,precedence_t p);
 
-    string pretty_print_at(precedence_t);
+    string pretty_print_at(precedence_t p);
 };
 
 class Mult : public expr {
@@ -100,9 +100,9 @@ public:
 
     string print(ostream &out);
 
-    string pretty_print(ostream &out);
+    string pretty_print(ostream &out,precedence_t p);
 
-    string pretty_print_at(precedence_t);
+    string pretty_print_at(precedence_t p);
 };
 
 class Variable : public expr{
@@ -123,9 +123,9 @@ public:
 
     string print(ostream &out);
 
-    string pretty_print(ostream &out);
+    string pretty_print(ostream &out,precedence_t p);
 
-    string pretty_print_at(precedence_t);
+    string pretty_print_at(precedence_t p);
 };
 
 
