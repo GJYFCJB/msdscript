@@ -8,4 +8,10 @@ cmdline.o
 cmake-build-debug-coverage
 /msdscript
 main.o
+<<<<<<< Updated upstream
 expr.o
+=======
+expr.o
+/msdscript/msdscript
+*.o
+>>>>>>> Stashed changes

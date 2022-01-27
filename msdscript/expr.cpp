@@ -83,16 +83,15 @@ string Num::print(ostream &out){
     return str;
 }
 
-string Num::pretty_print(ostream &out,precedence_t p){
+void Num::pretty_print(ostream &out){
+    pretty_print_at(out,prec_none, false);
+}
+
+void Num:: pretty_print_at(ostream &out,precedence_t p,bool isLeftInside){
     stringstream ss;
     ss << this->val;
     string str = ss.str();
     out<<str;
-    return str;
-}
-
-string Num::pretty_print_at(precedence_t p){
-    return "";
 }
 
 //Class Add--------------------------------------------------------------------------
@@ -118,7 +117,6 @@ int Add::interp() {
     if(this->rhs!=NULL && this->lhs!=NULL && this->interp_())
         return (this->rhs->interp() + this->lhs->interp());
     else(throw std::runtime_error("Variable has no value"));
-
 }
 
 bool Add::interp_(){
@@ -150,25 +148,29 @@ string Add::print(ostream &out){
     return "("+lhs->print(o)+ "+" +rhs->print(o)+")";
 }
 
-string Add::pretty_print(ostream &out,precedence_t p){
-    bool has_seen = false;
-    if(p == prec_mult || p == prec_add){
-        has_seen = true;
-    }
-    if(has_seen == true){
-        out<<"(";
-    }
-    lhs->pretty_print(out,prec_add);
-    out<<" + ";
-    rhs->pretty_print(out, prec_add);
-    if(has_seen == true){
-        out<<")";
-    }
-    return "";
+void Add::pretty_print(ostream &out){
+    pretty_print_at(out,prec_add, false);
 }
 
-string Add::pretty_print_at(precedence_t p){
-    return "";
+void Add::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside){
+
+    if(p==prec_add||p==prec_none){
+        this->lhs->pretty_print_at(out,prec_add,true);
+        out<<" + ";
+        this->rhs->pretty_print_at(out,prec_add, false);
+    }else{
+        out << "(";
+        this->lhs->pretty_print_at(out,prec_add,true);
+        out << " + ";
+        this->rhs->pretty_print_at(out,prec_add,false);
+        out << ")";
+    }
+}
+
+string Add::to_string(){
+    stringstream out("");
+    pretty_print(out);
+    return out.str();
 }
 
 //Class Mult--------------------------------------------------------------------------
@@ -192,7 +194,6 @@ int Mult::interp() {
     if(this->rhs!=NULL && this->lhs!=NULL && this->interp_())
         return (this->rhs->interp() * this->lhs->interp());
     else(throw std::runtime_error("Variable has no value"));
-    return 0;
 }
 
 bool Mult::interp_(){
@@ -217,26 +218,35 @@ expr* Mult::subst(string s1, expr *e){
 string Mult::print(ostream &out){
     stringstream o("");
     lhs->print(o);
-    rhs->print(o);
+    rhs ->print(o);
     out<<"("+lhs->print(o)+ "*" +rhs->print(o)+")";
     return "("+lhs->print(o)+ "*" +rhs->print(o)+")";
 }
 
-string Mult::pretty_print(ostream &out,precedence_t p){
-    if(p == prec_mult){
-        out<<"(";
-    }
-    lhs->pretty_print(out,prec_mult);
-    out<<" * ";
-    rhs->pretty_print(out, prec_mult);
-    if(p == prec_mult){
-        out<<")";
-    }
-    return "";
+void Mult::pretty_print(ostream &out){
+    pretty_print_at(out, prec_mult, false);
 }
 
-string Mult::pretty_print_at(precedence_t p){
-    return "";
+void Mult::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside){
+//opposite to dfs we use true/false and accumulator to identify l/r side of the mult
+//from top to bottom -> get the right answer
+    if(isLeftInside == true){
+        out<<"(";
+        lhs->pretty_print_at(out,prec_mult,true);
+        out<<" * ";
+        rhs->pretty_print_at(out, prec_mult, false);
+        out<<")";
+    }else{
+        lhs->pretty_print_at(out,prec_mult,true);
+        out<<" * ";
+        rhs->pretty_print_at(out, prec_mult, false);
+    }
+}
+
+string Mult::to_string(){
+    stringstream out("");
+    pretty_print(out);
+    return out.str();
 }
 
 //Class Variable--------------------------------------------------------------------------
@@ -273,13 +283,19 @@ string Variable::print(ostream &out){
     return "";
 }
 
-string Variable::pretty_print(ostream &outm, precedence_t p){
+void Variable::pretty_print(ostream &out){
 
-    return "";
+    pretty_print_at(out,prec_none, false);
 }
 
-string Variable::pretty_print_at(precedence_t p){
-    return "";
+void Variable::pretty_print_at(ostream &out,precedence_t p,bool isInside){
+    throw std::runtime_error("Variable not allow");
+}
+
+string Variable::to_string(){
+    stringstream out("");
+    pretty_print(out);
+    return out.str();
 }
 
 /*
@@ -395,6 +411,8 @@ TEST_CASE("subst"){
 }
 
 TEST_CASE("print && pretty_print"){
+
+    //-----test print
     stringstream out("");
     expr *f1 = new Num(2);
     f1->print(out);
@@ -410,25 +428,24 @@ TEST_CASE("print && pretty_print"){
     f3->print(out2);
     CHECK(out2.str() == "(1+(2*3))");
 
+    //---test pretty_print
     Num* num1 = new Num(1);
     Num* num2 = new Num(2);
     Num* num3 = new Num(3);
     Mult* m0 = new Mult(num1,num2);
     Mult* m2 = new Mult(m0,num3);
-
-    stringstream out5("");
-    m2->pretty_print(out5,prec_none);
-    CHECK(out5.str() == "(1 * 2) * 3");
-
+    Mult* m4 = new Mult(num3,m0);
     Add* add = new Add(num1,m0);
-    std::stringstream out3("");
-    add->pretty_print(out3, prec_none);
-    CHECK(out3.str() == "1 + 1 * 2");
-
+    Add* add2 = new Add(m0,m2);
     Add* add1 = new Add(num2,num3);
     Mult* m3 = new Mult(num3,add1);
-    stringstream out4("");
-    m3->pretty_print(out4,prec_none);
-    CHECK(out4.str() == "3 * (2 + 3)");
+    Variable *v = new Variable("s");
+
+    CHECK(m2->to_string() == "(1 * 2) * 3");
+    CHECK(m4->to_string() == "3 * 1 * 2");
+    CHECK(add->to_string() == "1 + 1 * 2");
+    CHECK(add2->to_string() =="(1 * 2) + (1 * 2) * 3");
+    CHECK(m3->to_string() == "3 * (2 + 3)");
+    CHECK_THROWS_WITH(v->to_string(),"Variable not allow" );
 
 }
