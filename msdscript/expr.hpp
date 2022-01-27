@@ -13,6 +13,7 @@
 #include <fstream>
 #include "catch.hpp"
 
+
 using namespace std;
 //int use_arguments(int argc, char **argv);
 
@@ -30,8 +31,9 @@ public:
     virtual bool has_variable() = 0;
     virtual expr* subst(string s1, expr *e) = 0;
     virtual string print(ostream &out) = 0;
-    virtual string pretty_print(ostream &out,precedence_t p) = 0;
-    virtual string pretty_print_at(precedence_t p) = 0;
+    virtual void pretty_print(ostream &out) = 0;
+    virtual void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside)= 0;
+    string to_string();
 };
 
 class Num : public expr {
@@ -52,9 +54,12 @@ public:
 
     string print(ostream &out);
 
-    string pretty_print(ostream &out,precedence_t p);
+    void pretty_print(ostream &out);
 
-    string pretty_print_at(precedence_t p);
+    void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside);
+
+
+
 };
 
 class Add : public expr {
@@ -76,9 +81,12 @@ public:
 
     string print(ostream &out);
 
-    string pretty_print(ostream &out,precedence_t p);
+    void pretty_print(ostream &out);
 
-    string pretty_print_at(precedence_t p);
+    void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside);
+
+    string to_string();
+
 };
 
 class Mult : public expr {
@@ -100,9 +108,11 @@ public:
 
     string print(ostream &out);
 
-    string pretty_print(ostream &out,precedence_t p);
+    void pretty_print(ostream &out);
 
-    string pretty_print_at(precedence_t p);
+    void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside);
+
+    string to_string();
 };
 
 class Variable : public expr{
@@ -123,9 +133,11 @@ public:
 
     string print(ostream &out);
 
-    string pretty_print(ostream &out,precedence_t p);
+    void pretty_print(ostream &out);
 
-    string pretty_print_at(precedence_t p);
+    void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside);
+
+    string to_string();
 };
 
 
