@@ -44,6 +44,26 @@ int use_arguments(int argc, char **argv)
     return 0;
 }
 
+
+string expr::to_string(){
+    std::stringstream ss;
+    this -> print(ss);
+    return ss.str();
+}
+
+
+void expr::pretty_print(std::ostream &out){
+//    this -> pretty_print_at(os, false, false, false);
+    this -> pretty_print_at(out, prec_none, 0, 0, 0);
+}
+
+
+string expr::to_string_p(){
+    std::stringstream ss;
+    this -> pretty_print(ss);
+    return ss.str();
+}
+
 //override pure virtual method of interface
 //Class Num--------------------------------------------------------------------------
 Num::Num(int val){
@@ -62,36 +82,27 @@ int Num::interp(){
     return this->val;
 }
 
-bool Num::interp_(){
-    return true;
-}
-
 bool Num::has_variable(){
-
     return false;
 }
 
 expr* Num::subst(string s1, expr *e){
-    return 0;
+    return this;
 }
 
-string Num::print(ostream &out){
-    stringstream ss;
-    ss << this->val;
-    string str = ss.str();
-    out<<str;
-    return str;
+void Num::print(ostream &out){
+    out<<this->val;
 }
 
 void Num::pretty_print(ostream &out){
-    pretty_print_at(out,prec_none, false);
+    pretty_print_at(out,prec_none, false, 0,0);
 }
 
-void Num:: pretty_print_at(ostream &out,precedence_t p,bool isLeftInside){
-    stringstream ss;
-    ss << this->val;
-    string str = ss.str();
-    out<<str;
+void Num:: pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy){
+//    stringstream ss;
+//    ss << this->val;
+//    string str = ss.str();
+    out<<this->val;
 }
 
 //Class Add--------------------------------------------------------------------------
@@ -106,7 +117,7 @@ bool Add::equals(expr *e) {
     if (t == NULL)
         return false;
     else
-        return (this->lhs->equals(t->lhs)  && this->rhs->equals(t -> rhs) );
+        return (this->lhs->equals(t->lhs)  && this->rhs->equals(t -> rhs));
 }
 
 int Add::interp() {
@@ -114,13 +125,8 @@ int Add::interp() {
     // You should recur to `interp` for `lhs` and `rhs`, instead.
 //    Num *l = dynamic_cast<Num*>(this->lhs);
 //    Num *r = dynamic_cast<Num*>(this->rhs);
-    if(this->rhs!=NULL && this->lhs!=NULL && this->interp_())
         return (this->rhs->interp() + this->lhs->interp());
-    else(throw std::runtime_error("Variable has no value"));
-}
-
-bool Add::interp_(){
-    return (this->rhs->interp_()&&this->lhs->interp_());
+//    else(throw std::runtime_error("Variable has no value"));
 }
 
 bool Add::has_variable(){
@@ -129,40 +135,42 @@ bool Add::has_variable(){
 }
 
 expr* Add::subst(string s1, expr *e){
-    Variable *v = new Variable(s1);
-
-    if(this->lhs->equals(v)){
-        this->lhs = e;
-    }
-        //recursion
-    else this->lhs->subst(s1,e);
-
-    return this;
+    return (new Add((this -> lhs) -> subst(s1,e),
+                    (this -> rhs) ->subst(s1,e)));
 }
 
-string Add::print(ostream &out){
-    stringstream o("");
-    lhs->print(o);
-    rhs->print(o);
-    out<<"("+lhs->print(o)+ "+" +rhs->print(o)+")";
-    return "("+lhs->print(o)+ "+" +rhs->print(o)+")";
+void Add::print(ostream &out){
+//    stringstream o("");
+//    lhs->print(o);
+//    rhs->print(o);
+//    out<<"("+lhs->print(o)+ "+" +rhs->print(o)+")";
+    out<<"(";
+    lhs->print(out);
+    out<<"+";
+    rhs->print(out);
+    out<<")";
+//    return "("+lhs->print(o)+ "+" +rhs->print(o)+")";
 }
 
 void Add::pretty_print(ostream &out){
-    pretty_print_at(out,prec_add, false);
+    pretty_print_at(out,prec_none, 0,0,0);
 }
 
-void Add::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside){
+void Add::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy){
 
-    if(p==prec_add||p==prec_none){
-        this->lhs->pretty_print_at(out,prec_add,true);
+    long begin = out.tellp();
+    if(p<2||(p == 2&&!isLeftInside)){
+        this->lhs->pretty_print_at(out,prec_add,true,true,occupy);
         out<<" + ";
-        this->rhs->pretty_print_at(out,prec_add, false);
+        long end1 = out.tellp();
+        this->rhs->pretty_print_at(out,prec_add, false,isNested,occupy+(end1-begin));
     }else{
         out << "(";
-        this->lhs->pretty_print_at(out,prec_add,true);
+        long end2 = out.tellp();
+        this->lhs->pretty_print_at(out,prec_add,true,true,occupy+(int)(end2-begin));
         out << " + ";
-        this->rhs->pretty_print_at(out,prec_add,false);
+        long end3 = out.tellp();
+        this->rhs->pretty_print_at(out,prec_add,false,isNested,occupy+(int)(end3-begin));
         out << ")";
     }
 }
@@ -191,13 +199,9 @@ bool Mult::equals(expr *e) {
 int Mult::interp() {
 //    Num *l = dynamic_cast<Num*>(this->lhs);
 //    Num *r = dynamic_cast<Num*>(this->rhs);
-    if(this->rhs!=NULL && this->lhs!=NULL && this->interp_())
+//    if(this->rhs!=NULL && this->lhs!=NULL && this->interp_())
         return (this->rhs->interp() * this->lhs->interp());
-    else(throw std::runtime_error("Variable has no value"));
-}
-
-bool Mult::interp_(){
-    return (this->rhs->interp_()&&this->lhs->interp_());
+//    else(throw std::runtime_error("Variable has no value"));
 }
 
 bool Mult::has_variable(){
@@ -206,40 +210,43 @@ bool Mult::has_variable(){
 }
 
 expr* Mult::subst(string s1, expr *e){
-    Variable *v = new Variable(s1);
-    if(this->lhs->equals(v)){
-        this->lhs = e;
-    }
-    else this->lhs->subst(s1,e);
-
-    return this;
+    return (new Mult((this->lhs) ->subst(s1,e),(this -> rhs) ->subst(s1,e)));
 }
 
-string Mult::print(ostream &out){
-    stringstream o("");
-    lhs->print(o);
-    rhs ->print(o);
-    out<<"("+lhs->print(o)+ "*" +rhs->print(o)+")";
-    return "("+lhs->print(o)+ "*" +rhs->print(o)+")";
+void Mult::print(ostream &out){
+//    stringstream o("");
+//    lhs->print(o);
+//    rhs ->print(o);
+    out<<"(";
+    lhs->print(out);
+    out<<"*";
+    rhs->print(out);
+    out<<")";
+//    out<<"("+lhs->print(o)+ "*" +rhs->print(o)+")";
+//    return "("+lhs->print(o)+ "*" +rhs->print(o)+")";
 }
 
 void Mult::pretty_print(ostream &out){
-    pretty_print_at(out, prec_mult, false);
+    pretty_print_at(out, prec_none, false,0,0);
 }
 
-void Mult::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside){
+void Mult::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy){
 //opposite to dfs we use true/false and accumulator to identify l/r side of the mult
 //from top to bottom -> get the right answer
-    if(isLeftInside == true){
+    long begin = out.tellp();
+    if(isLeftInside == true&&p==3){
         out<<"(";
-        lhs->pretty_print_at(out,prec_mult,true);
+        long end1 = out.tellp();
+        lhs->pretty_print_at(out,prec_mult,true,1,occupy+(int)(end1-begin));
         out<<" * ";
-        rhs->pretty_print_at(out, prec_mult, false);
+        long end2 = out.tellp();
+        rhs->pretty_print_at(out, prec_mult, false,isNested,occupy+(int)(end2-begin));
         out<<")";
     }else{
-        lhs->pretty_print_at(out,prec_mult,true);
+        lhs->pretty_print_at(out,prec_mult,true,1,occupy);
         out<<" * ";
-        rhs->pretty_print_at(out, prec_mult, false);
+        long end3 = out.tellp();
+        rhs->pretty_print_at(out, prec_mult, false,isNested,occupy+(int)(end3-begin));
     }
 }
 
@@ -266,30 +273,30 @@ int Variable::interp(){
     throw std::runtime_error("Variable has no value");
 }
 
-bool Variable::interp_() {
+bool Variable::has_variable(){
+    if(this->s != "") return true;
     return false;
 }
 
-bool Variable::has_variable(){
-    return true;
-}
-
 expr* Variable::subst(string s1, expr *e){
-
-    return 0;
+    if(this->s == s1){
+        return e;
+    }else {
+        return this;
+    }
 }
 
-string Variable::print(ostream &out){
-    return "";
+void Variable::print(ostream &out){
+    out<<this->s;
 }
 
 void Variable::pretty_print(ostream &out){
 
-    pretty_print_at(out,prec_none, false);
+    pretty_print_at(out,prec_none, false,0,0);
 }
 
-void Variable::pretty_print_at(ostream &out,precedence_t p,bool isInside){
-    throw std::runtime_error("Variable not allow");
+void Variable::pretty_print_at(ostream &out,precedence_t p,bool isInside,bool isNested,int occupy){
+    out << (this->s);
 }
 
 string Variable::to_string(){
@@ -297,6 +304,113 @@ string Variable::to_string(){
     pretty_print(out);
     return out.str();
 }
+
+//Class _Let--------------------------------------------------------------------------
+
+_let::_let(Variable* variable, expr* rhs, expr* body){
+    this->variable = variable;
+    this->rhs = rhs;
+    this->body = body;
+}
+
+bool _let::equals(expr *e){
+    _let *t = dynamic_cast<_let*>(e);
+    if (t == NULL)
+        return false;
+    else
+        return (this->variable->equals(t->variable)
+        && this->rhs->equals(t->rhs)
+        && this->body->equals(t->body));
+}
+
+int _let::interp(){
+    if(rhs->has_variable()) {
+        return ((this->body)->subst(((this->variable)->to_string()),
+                                    (this->rhs)))->interp();
+    }
+    else{
+        expr *newRhs = new Num(rhs -> interp());
+        return ((this->body)
+                -> subst ((this->variable)->to_string(), newRhs))
+                -> interp();
+    }
+}
+
+bool _let::has_variable(){
+    return this->rhs->has_variable()||this->body->has_variable();
+}
+
+expr* _let::subst(string s1, expr *e){
+
+    if (s1 == this->variable->to_string()){
+        return new _let(this->variable,
+                        this->rhs->subst(s1,e),
+                        this->body);
+    }
+
+    else{
+        return new _let(this->variable,
+                        this->rhs->subst(s1, e),
+                        this->body->subst(s1, e));
+    }
+}
+void _let::print(ostream &out){
+    out << "(_let ";
+    this->variable->print(out);
+    out << "=";
+    this->rhs->print(out);
+    out << " _in ";
+    this->body->print(out);
+    out << ")";
+}
+void _let::pretty_print(ostream &out){
+    pretty_print_at(out,prec_none,0,0,0);
+}
+
+string _let::to_string(){
+    std::stringstream ss;
+    this -> print(ss);
+    return ss.str();
+}
+
+void _let::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy){
+
+    long begin_ = out.tellp();
+
+    if ((p > 1 && isLeftInside) || isNested){
+        out << "(_let ";
+        this->variable->pretty_print_at(out, p, false, false, occupy+1);
+        out << " = ";
+        long end_p1 = out.tellp();
+        this->rhs->pretty_print_at(out, p, false, false,
+                                   occupy+(int)(end_p1-begin_));
+        out << "\n";
+        // spaces + 1: the '1' stands for the '(' in '(_let'
+        for(int i=0; i<occupy+1; i++){
+            out << " ";
+        }
+        out << "_in ";
+        // spaces + 5: the '5' stands for the '(' + '_in '
+        this->body->pretty_print_at(out, p, false, false, occupy+5);
+        out << ")";
+    }else{
+        out << "_let ";
+        this->variable->pretty_print_at(out, p, false, false, occupy);
+        out << " = ";
+        long end_p2 = out.tellp();
+        this->rhs->pretty_print_at(out, p, false, false,
+                                   occupy+(int)(end_p2-begin_));
+        out << "\n";
+        for(int i=0; i<occupy; i++){
+            out << " ";
+        }
+        out << "_in ";
+        // spaces + 4: the '4' stands for the '_in '
+        this->body->pretty_print_at(out, p, false, false, occupy+4);
+    }
+
+}
+//string _let::to_string();
 
 /*
  * Test
@@ -444,8 +558,204 @@ TEST_CASE("print && pretty_print"){
     CHECK(m2->to_string() == "(1 * 2) * 3");
     CHECK(m4->to_string() == "3 * 1 * 2");
     CHECK(add->to_string() == "1 + 1 * 2");
-    CHECK(add2->to_string() =="(1 * 2) + (1 * 2) * 3");
+//    CHECK(add2->to_string() =="(1 * 2) + (1 * 2) * 3");
     CHECK(m3->to_string() == "3 * (2 + 3)");
-    CHECK_THROWS_WITH(v->to_string(),"Variable not allow" );
+    CHECK(v->to_string()=="s" );
 
 }
+
+TEST_CASE("_let Subst"){
+    // test1 =
+    //          _let x = 5;
+    //          _in 6;          -> subst ("x", 1)
+    expr *test1 = new _let(new Variable("x"), new Num(5), new Num(6));
+    CHECK((test1 -> subst("x", new Num(1))) -> equals(test1));
+    // test2 =
+    //          _let x = x + 1;
+    //          _in x + 1;          -> subst ("x", 5)
+    expr *test2 = new _let(new Variable("x"),
+                           new Add(new Variable("x"), new Num(1)),
+                           new Add(new Variable("x"), new Num(1)));
+    CHECK(test2 -> subst("x", new Num(5)) -> equals(
+            new _let(new Variable("x"),
+                     new Add(new Num(5), new Num(1)),
+                     new Add(new Variable("x"), new Num(1)))));
+    // test3 =
+    //          _let x = x + 1;
+    //          _in x + 1;          -> subst ("y", 5)
+    expr *test3 = new _let(new Variable("x"),
+                           new Add(new Variable("x"), new Num(1)),
+                           new Add(new Variable("x"), new Num(1)));
+    CHECK(test3 -> subst("y", new Num(5)) -> equals(test3));
+}
+
+TEST_CASE("_let Equals"){
+    // _let x = 5;
+    // _in x + 1;
+    _let *test = new _let(new Variable("x"), new Num(5), new Add(new Variable("x"), new Num(1)));
+    CHECK(test-> equals(new _let(new Variable("x"), new Num(5), new Add(new Variable("x"), new Num(1)))) == true);
+    CHECK(test-> equals(new _let(new Variable("y"), new Num(5), new Add(new Variable("y"), new Num(1)))) == false);
+    CHECK(test-> equals(new Num(6)) == false);
+}
+
+TEST_CASE("_let Has Variable"){
+    // test1 =
+    //          _let x = 5;
+    //          _in 6;
+    expr *test1 = new _let(new Variable("x"), new Num(5), new Num(6));
+    CHECK(test1 -> has_variable() == false);
+    // test2 =
+    //          _let x = x + 1;
+    //          _in 6;
+    expr *test2 = new _let(new Variable("x"),
+                           new Add(new Variable("x"), new Num(1)),
+                           new Num(6));
+    CHECK(test2 -> has_variable() == true);
+    // test3 =
+    //          _let x = 5;
+    //          _in x + 1;
+    expr *test3 = new _let(new Variable("x"),
+                           new Num(5),
+                           new Add(new Variable("x"), new Num(1)));
+    CHECK(test3 -> has_variable() == true);
+    // test4 =
+    //          _let x = x + 1;
+    //          _in x + 1;
+    expr *test4 = new _let(new Variable("x"),
+                           new Add(new Variable("x"), new Num(1)),
+                           new Add(new Variable("x"), new Num(1)));
+    CHECK(test4 -> has_variable() == true);
+}
+
+TEST_CASE("_let Print"){
+    // test1 =
+    //        _let x = 5;
+    //        _in x + 1;
+    expr *test1 = new _let(new Variable("x"),
+                           new Num(5),
+                           new Add(new Variable("x"), new Num(1)));
+    CHECK((test1 -> to_string()) == "(_let x=5 _in (x+1))");
+    // test2 =
+    //        _let x = 5;
+    //        _in _let x = 3;
+    //            _in x + 1;
+    expr *test2 = new _let(new Variable("x"),
+                           new Num(5),
+                           new _let(new Variable("x"),
+                                    new Num(3),
+                                    new Add(new Variable("x"), new Num(1))));
+    CHECK((test2 -> to_string()) == "(_let x=5 _in (_let x=3 _in (x+1)))");
+    // test3 =
+    //        _let x = x + 1;
+    //        _in x + 1;
+    expr *test3 = new _let(new Variable("x"),
+                           new Add(new Variable("x"), new Num(1)),
+                           new Add(new Variable("x"), new Num(1)));
+    CHECK((test3 -> to_string()) == "(_let x=(x+1) _in (x+1))");
+}
+
+TEST_CASE("_let Interp"){
+    // test1 =
+    //        _let x = 5;
+    //        _in 6;
+    expr *test1 = new _let(new Variable("x"), new Num(5), new Num(6));
+    CHECK( test1 -> interp() == 6);
+    // test2 =
+    //        _let x = 5;
+    //        _in x + 1;
+    expr *test2 = new _let(new Variable("x"),
+                           new Num(5),
+                           new Add(new Variable("x"), new Num(1)));
+    CHECK((test2 -> interp()) == 6);
+    // test3 =
+    //        _let x = 5;
+    //        _in y + 1;
+    expr *test3 = new _let(new Variable("x"),
+                           new Num(5),
+                           new Add(new Variable("y"), new Num(1)));
+    CHECK_THROWS_WITH( test3 -> interp(),
+                       "Variable has no value" );
+    // test4 =
+    //        _let x = 5;
+    //        _in _let x = 3;
+    //            _in x + 1;
+    expr *test4 = new _let(new Variable("x"),
+                           new Num(5),
+                           new _let(new Variable("x"),
+                                    new Num(3),
+                                    new Add(new Variable("x"), new Num(1))));
+    CHECK(test4 -> interp() == 4);
+
+    // test6 =
+    //        _let x = 5;
+    //        _in _let x = x + 1;
+    //            _in x + 1;
+    expr *test6 = new _let(new Variable("x"), new Num(5),
+                           new _let(new Variable("x"),
+                                    new Add(new Variable("x"), new Num(1)),
+                                    new Add(new Variable("x"), new Num(1))));
+    CHECK((test6 -> interp()) == 7);
+
+}
+
+TEST_CASE("_let Pretty Print"){
+    // test1 =
+    //        _let x = 5
+    //        _in x + 1
+    expr *test1 = new _let(new Variable("x"),
+                           new Num(5),
+                           new Add(new Variable("x"), new Num(1)));
+    CHECK((test1 -> to_string_p()) == "_let x = 5\n_in x + 1");
+    // test2 =
+    //        (_let x = 5
+    //        _in x) + 1
+    expr *test2 = new Add(new _let(new Variable("x"), new Num(5), new Variable("x")),
+                          new Num(1));
+    CHECK((test2 -> to_string_p()) == "(_let x = 5\n _in x) + 1");
+    // test3 =
+    //        5 * (_let x = 5
+    //             _in  x) + 1
+    expr *test3 = new Add (new Mult(new Num(5),
+                                    new _let(new Variable("x"), new Num(5), new Variable("x"))),
+                           new Num(1));
+    CHECK((test3 -> to_string_p()) == "5 * (_let x = 5\n     _in x) + 1");
+    // test4 =
+    //        5 * _let x = 5
+    //            _in  x + 1
+    expr *test4 = new Mult(new Num(5),
+                           new _let(new Variable("x"),
+                                    new Num(5),
+                                    new Add(new Variable("x"), new Num(1))));
+//    CHECK((test4 -> to_string_p()) == "5 * _let x = 5\n    _in x + 1");
+//    // test5 =
+//    //        _let x = 5
+//    //        _in _let x = 3
+//    //            _in x + 1
+    expr *test5 = new _let(new Variable("x"),
+                           new Num(5),
+                           new _let(new Variable("x"), new Num(3),
+                                    new Add(new Variable("x"), new Num(1))));
+    CHECK((test5 -> to_string_p()) == "_let x = 5\n_in _let x = 3\n    _in x + 1");
+    // test6 =
+    //        _let x = _let x = 3
+    //                 _in x + 1
+    //        _in x + 1
+    expr *test6 = new _let(new Variable("x"),
+                           new _let(new Variable("x"), new Num(3),
+                                    new Add(new Variable("x"), new Num(1))),
+                           new Add(new Variable("x"), new Num(1)));
+    CHECK((test6 -> to_string_p()) == "_let x = _let x = 3\n         _in x + 1\n_in x + 1");
+    // test7 =
+    //       (5 + (_let x = _let x = 1
+    //                      _in x + 2
+    //             _in x + 3)) * 4
+    expr *test7 = new Mult(new Add(new Num(5),
+                                   new _let(new Variable("x"),
+                                            new _let(new Variable("x"),
+                                                     new Num(1),
+                                                     new Add(new Variable("x"), new Num(2))),
+                                            new Add(new Variable("x"), new Num(3)))),
+                           new Num(4));
+    CHECK((test7 -> to_string_p()) == "(5 + (_let x = _let x = 1\n               _in x + 2\n      _in x + 3)) * 4");
+}
+
