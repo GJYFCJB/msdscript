@@ -4,15 +4,13 @@
 
 #ifndef expr_hpp
 #define expr_hpp
-#define CATCH_CONFIG_RUNNER
+
 #include <stdio.h>
 #include <iostream>
 #include <string>
 #include <cmath>
 #include <vector>
 #include <fstream>
-#include "catch.hpp"
-
 
 using namespace std;
 
@@ -36,8 +34,7 @@ The value of a multiplication expression is the product of the subexpression val
     virtual void pretty_print(ostream &out) = 0;
     virtual void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy)= 0;
     string to_string();
-    string to_string_p();
-
+    string to_pretty_string();
 };
 
 class Num : public expr {
