@@ -47,6 +47,8 @@ int use_arguments(int argc, char **argv){
 }
 
 int main(int argc,char **argv){
+
+    use_arguments(argc, argv);
     while (1) {
         expr *e = parse_expr(std::cin);
         e->pretty_print(std::cout);
@@ -55,13 +57,11 @@ int main(int argc,char **argv){
         if (std::cin.eof())
             break; }
     return 0;
-    use_arguments(argc, argv);
 
     return 0;
 }
 
 TEST_CASE("equals"){
-    PTR(expr) e =
 //test objects
     Num n1(3);
     Variable v1("Jin");
