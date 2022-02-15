@@ -10,6 +10,7 @@
 #include "main.hpp"
 #include "expr.hpp"
 #include "parse.hpp"
+#include "exec.cpp"
 using namespace std;
 
 string s1 = "--help";
@@ -42,21 +43,32 @@ int use_arguments(int argc, char **argv){
             }
 
             else if(argv[i] == s3){
+                try{
                 expr * e = parse(std::cin);
                 cout<<e->interp()<<endl;
-                exit(0);
+                exit(0);}catch (runtime_error exn){
+                    std::cerr << exn.what() << "\n";
+                    return 1;
+                }
             }
 
             else if(argv[i] == s4){
+                try{
                 expr * e = parse(std::cin);
                 cout<<e->to_string()<<endl;
-                exit(0);
+                exit(0);}catch (runtime_error exn){
+                    std::cerr << exn.what() << "\n";
+                    return 1;
+                }
             }
 
             else if(argv[i] == s5){
+                try{
                 expr * e = parse(std::cin);
                 cout<<e->to_pretty_string()<<endl;
-                exit(0);
+                exit(0);}catch (runtime_error exn){
+                    std::cerr << exn.what() << "\n";
+                    return 1;}
             }
                 //if test 2 times more or input other command not valid
             else {
@@ -71,7 +83,18 @@ int use_arguments(int argc, char **argv){
 
 int main(int argc,char **argv){
 
-
+    const char * const interp_argv[] = { "msdscript", "--interp" };
+    const char * const print_argv[] = { "msdscript", "--print" };
+    for (int i = 0; i < 100; i++) {
+        std::string in = random_expr_string();
+        std::cout << "Trying " << in << "\n";
+        ExecResult interp_result = exec_program(2, interp_argv, in);
+        ExecResult print_result = exec_program(2, print_argv, in);
+        ExecResult interp_again_result = exec_program(2, interp_argv, print_result.out);
+        if (interp_again_result.out != interp_result.out)
+            throw std::runtime_error("different result for printed");
+    }
+    return 0;
 
 
     use_arguments(argc, argv);
