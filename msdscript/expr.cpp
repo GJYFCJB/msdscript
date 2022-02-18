@@ -4,7 +4,7 @@
 
 
 #include "expr.hpp"
-
+#include "Val.h"
 #include<iostream>
 #include<stdexcept>
 #include <sstream>
@@ -13,15 +13,9 @@ using namespace std;
 
 string expr::to_string(){
     std::stringstream ss;
-    this -> print(ss);
+    this ->print(ss);
     return ss.str();
 }
-
-//string expr::to_string_(){
-//    std::istream ss;
-//    this -> print(ss);
-//    return ss.str();
-//}
 
 
 void expr::pretty_print(std::ostream &out){
@@ -29,20 +23,17 @@ void expr::pretty_print(std::ostream &out){
     this -> pretty_print_at(out, prec_none, 0, 0, 0);
 }
 
-
-
 string expr::to_pretty_string(){
     std::stringstream ss;
     this -> pretty_print(ss);
     return ss.str();
 }
 
-
-
 //override pure virtual method of interface
 //Class Num--------------------------------------------------------------------------
-Num::Num(int val){
-    this->val = val;
+Num::Num(int val_){
+    this->dig = val_;
+    Val* val = new NumVal(val_);
 }
 
 bool Num::equals(expr *e) {
@@ -50,11 +41,11 @@ bool Num::equals(expr *e) {
     if (t == NULL)
         return false;
     else
-        return (this->val == t->val);
+        return (this->dig == t->dig);
 }
 
-int Num::interp(){
-    return this->val;
+Val * Num::interp(){
+    return new NumVal(dig);
 }
 
 bool Num::has_variable(){
@@ -66,7 +57,7 @@ expr* Num::subst(string s1, expr *e){
 }
 
 void Num::print(ostream &out){
-    out<<this->val;
+    out<<this->dig;
 }
 
 void Num::pretty_print(ostream &out){
@@ -74,10 +65,8 @@ void Num::pretty_print(ostream &out){
 }
 
 void Num:: pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy){
-//    stringstream ss;
-//    ss << this->val;
-//    string str = ss.str();
-    out<<this->val;
+
+    out<<this->dig;
 }
 
 
@@ -96,18 +85,15 @@ bool Add::equals(expr *e) {
         return (this->lhs->equals(t->lhs)  && this->rhs->equals(t -> rhs));
 }
 
-int Add::interp() {
+Val* Add::interp() {
 //Those methods should not use `dynamic_cast` (which should only be used in `equals`)
     // You should recur to `interp` for `lhs` and `rhs`, instead.
-//    Num *l = dynamic_cast<Num*>(this->lhs);
-//    Num *r = dynamic_cast<Num*>(this->rhs);
-        return (this->rhs->interp() + this->lhs->interp());
-//    else(throw std::runtime_error("Variable has no value"));
+    //why does not work
+        return lhs->interp()->addTo(rhs->interp());
 }
 
 bool Add::has_variable(){
-    if(this->lhs->has_variable()||this->rhs->has_variable()) return true;
-    return false;
+    return this->lhs->has_variable()||this->rhs->has_variable();
 }
 
 expr* Add::subst(string s1, expr *e){
@@ -172,17 +158,16 @@ bool Mult::equals(expr *e) {
         return (this->lhs->equals(t->lhs)  && this->rhs->equals(t -> rhs) );
 }
 
-int Mult::interp() {
+Val* Mult::interp() {
 //    Num *l = dynamic_cast<Num*>(this->lhs);
 //    Num *r = dynamic_cast<Num*>(this->rhs);
 //    if(this->rhs!=NULL && this->lhs!=NULL && this->interp_())
-        return (this->rhs->interp() * this->lhs->interp());
+        return (this->rhs->interp()->multWith(this->lhs->interp()));
 //    else(throw std::runtime_error("Variable has no value"));
 }
 
 bool Mult::has_variable(){
-    if(this->lhs->has_variable()||this->rhs->has_variable()) return true;
-    return false;
+    return (this->lhs->has_variable()||this->rhs->has_variable());
 }
 
 expr* Mult::subst(string s1, expr *e){
@@ -245,13 +230,13 @@ bool Variable::equals(expr *e) {
         return (this->s == t->s);
 }
 
-int Variable::interp(){
+Val* Variable::interp(){
     throw std::runtime_error("Variable has no value");
 }
 
+
 bool Variable::has_variable(){
-    if(this->s != "") return true;
-    return false;
+    return true;
 }
 
 expr* Variable::subst(string s1, expr *e){
@@ -299,15 +284,18 @@ bool _let::equals(expr *e){
         && this->body->equals(t->body));
 }
 
-int _let::interp(){
+Val* _let::interp(){
+
+//    Val *val = rhs->interp();
+//    return body->subst(this->to_string(), val->to_expr())->interp();
     if(rhs) {
         return ((this->body)->subst(((this->variable)->to_string()),
                                     (this->rhs)))->interp();
     }
     else{
-        expr *newRhs = new Num(rhs -> interp());
+        Val *newRhs = rhs -> interp();
         return ((this->body)
-                -> subst ((this->variable)->to_string(), newRhs))
+                -> subst ((this->variable)->to_string(), newRhs->to_expr()))
                 -> interp();
     }
 }

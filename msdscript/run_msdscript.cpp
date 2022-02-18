@@ -7,7 +7,8 @@
 
 std::string random_expr_string();
 
-int main(int argc, char **argv){
+int main(int argc, char **argv) {
+
     const char * const interp_argv[] = { "msdscript", "--interp" };
     const char * const print_argv[] = { "msdscript", "--print" };
     for (int i = 0; i < 100; i++) {

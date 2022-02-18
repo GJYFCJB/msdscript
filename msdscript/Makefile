@@ -1,5 +1,6 @@
-INCS = main.hpp expr.hpp parse.hpp exec.h
-OBJS = main.o expr.o parse.o
+INCS = main.hpp expr.hpp parse.hpp exec.h val.h
+OBJS = main.o expr.o parse.o Val.o
+INCS1 = exec.h
 OBJS1 = exec.o run_msdscript.o
 msdscript: $(OBJS)
 		c++ --std=c++14 -O2 -o msdscript $(OBJS)
@@ -13,13 +14,16 @@ main.o: main.cpp $(INCS)
 expr.o: expr.cpp $(INCS)
 		c++ --std=c++14 -O2 -c expr.cpp
 
+Val.o: Val.cpp $(INCS)
+		c++ --std=c++14 -O2 -c Val.cpp
+
 parse.o: parse.cpp $(INCS)
 		c++ --std=c++14 -O2 -c parse.cpp
 
-exec.o: exec.cpp $(INCS)
+exec.o: exec.cpp $(INCS1)
 		c++ --std=c++14 -O2 -c exec.cpp
 
-run_msdscript.o: run_msdscript.cpp $(INCS)
+run_msdscript.o: run_msdscript.cpp $(INCS1)
 		c++ --std=c++14 -O2 -c run_msdscript.cpp
 
 .PHONY : test
