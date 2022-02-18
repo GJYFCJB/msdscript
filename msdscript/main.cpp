@@ -10,7 +10,7 @@
 #include "main.hpp"
 #include "expr.hpp"
 #include "parse.hpp"
-#include "exec.cpp"
+#include "Val.h"
 using namespace std;
 
 string s1 = "--help";
@@ -45,7 +45,7 @@ int use_arguments(int argc, char **argv){
             else if(argv[i] == s3){
                 try{
                 expr * e = parse(std::cin);
-                cout<<e->interp()<<endl;
+                cout<<e->interp()->to_expr()->to_string()<<endl;
                 exit(0);}catch (runtime_error exn){
                     std::cerr << exn.what() << "\n";
                     return 1;
@@ -82,7 +82,7 @@ int use_arguments(int argc, char **argv){
 }
 
 int main(int argc,char **argv){
-    
+
     use_arguments(argc, argv);
     return 0;
 
@@ -149,17 +149,17 @@ TEST_CASE("interp"){
     expr *f4 = new Num(5);
     Add a1(f1, f2);
     Mult m1(f3,f4);
-    int res_Num = n1.interp();
-    int res_Add = a1.interp();
-    int res_Mult = m1.interp();
+    Val* res_Num = n1.interp();
+    Val* res_Add = a1.interp();
+    Val* res_Mult = m1.interp();
     expr *f5 = new Add((new Variable("s")),
                        (new Num(1)));
     expr *f6 = new Mult((new Variable("s")),
                         (new Num(1)));
 //test interp
-    CHECK(res_Num==3);
-    CHECK(res_Add==5);
-    CHECK(res_Mult==20);
+    CHECK(res_Num->equals(new NumVal(3)));
+    CHECK(res_Add->equals(new NumVal(5)));
+    CHECK(res_Mult->equals(new NumVal(20)));
     CHECK_THROWS_WITH(f5->interp(),"Variable has no value" );
     CHECK_THROWS_WITH( v1.interp(), "Variable has no value" );
     CHECK_THROWS_WITH(f6->interp(),"Variable has no value" );
@@ -168,13 +168,15 @@ TEST_CASE("interp"){
 
 TEST_CASE("has_variable"){
 //test has_variable
-    CHECK((new Num(5))->has_variable()== false);
-    CHECK((new Add((new Variable("s")),(new Num(1)))));
-    CHECK((new Mult((new Variable("s")),(new Num(1)))));
-    CHECK((new Add((new Num(3)),(new Num(1)))));
-    CHECK((new Mult((new Num(3)),(new Num(1)))));
-    CHECK(new Variable("s"));
+    CHECK((new Num(5))->has_variable() == false);
+    CHECK((new Add((new Variable("s")),(new Num(1))))->has_variable());
+    CHECK((new Mult((new Variable("s")),(new Num(1))))->has_variable());
+    CHECK((new Add((new Num(3)),(new Num(1))))->has_variable() == false);
+    CHECK((new Mult((new Num(3)),(new Num(1))))->has_variable() == false);
+    CHECK((new Variable("1"))->has_variable());
+
 }
+
 TEST_CASE("subst"){
 //test subst
 
@@ -227,6 +229,7 @@ TEST_CASE("print && pretty_print"){
     Mult* m3 = new Mult(num3,add1);
     Variable *v = new Variable("s");
 
+    CHECK(num1->to_string()=="1");
     CHECK(m2->to_string() == "(1 * 2) * 3");
     CHECK(m4->to_string() == "3 * 1 * 2");
     CHECK(add->to_string() == "1 + 1 * 2");
@@ -331,14 +334,14 @@ TEST_CASE("_let Interp"){
 //        _let x = 4;
 //        _in 7;
     expr *test1 = new _let(new Variable("x"), new Num(4), new Num(7));
-    CHECK( test1 -> interp() == 7);
+    CHECK( test1 -> interp() ->equals(new NumVal(7)) );
 // test2 =
 //        _let x = 2;
 //        _in x + 1;
     expr *test2 = new _let(new Variable("x"),
                            new Num(2),
                            new Add(new Variable("x"), new Num(1)));
-    CHECK((test2 -> interp()) == 3);
+    CHECK((test2 -> interp()) ->equals(new NumVal(3)) );
 // test3 =
 //        _let x = 7;
 //        _in y + 2;
@@ -356,7 +359,7 @@ TEST_CASE("_let Interp"){
                            new _let(new Variable("x"),
                                     new Num(7),
                                     new Add(new Variable("x"), new Num(1))));
-    CHECK(test4 -> interp() == 8);
+    CHECK(test4 -> interp()->equals(new NumVal(8)) );
 
 // test6 =
 //        _let x = 9;
@@ -366,7 +369,7 @@ TEST_CASE("_let Interp"){
                            new _let(new Variable("x"),
                                     new Add(new Variable("x"), new Num(2)),
                                     new Add(new Variable("x"), new Num(2))));
-    CHECK((test6 -> interp()) == 13);
+    CHECK((test6 -> interp()) ->equals(new NumVal(13)) );
 
 }
 
@@ -516,4 +519,5 @@ TEST_CASE("Parse"){
              new _let(new Variable("x"), new Num(7),
                       new Add(new Variable("x"), new Num(2))),
              new Add(new Variable("x"), new Num(2)))));
+    
 }

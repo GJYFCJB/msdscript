@@ -4,8 +4,6 @@
 
 #ifndef CS6015PROJECT_EXEC_H
 #define CS6015PROJECT_EXEC_H
-
-
 #include <string>
 #include <iostream>
 class ExecResult {

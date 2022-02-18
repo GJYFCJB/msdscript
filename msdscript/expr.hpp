@@ -20,14 +20,14 @@ typedef enum {
     prec_add,       // = 2
     prec_mult       // = 3
 } precedence_t;
-
+class Val;
 class expr{
 public:
     virtual bool equals(expr *e) = 0;
     /*The value of a number is the number
 The value of an addition expression is the sum of the subexpression values
 The value of a multiplication expression is the product of the subexpression values*/
-    virtual int interp() = 0;
+    virtual Val* interp() = 0;
     virtual bool has_variable() = 0;
     virtual expr* subst(string s1, expr *e) = 0;
     virtual void print(ostream &out) = 0;
@@ -35,16 +35,17 @@ The value of a multiplication expression is the product of the subexpression val
     virtual void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy)= 0;
     string to_string();
     string to_pretty_string();
-//    string to_string_()
 };
 
 class Num : public expr {
 public:
-    int val;
+    int dig;
+    Val* val;
+    
 
     Num(int val) ;
     bool equals(expr *e);
-    int interp();
+    Val * interp();
     bool has_variable();
     expr* subst(string s1, expr *e);
     void print(ostream &out);
@@ -59,7 +60,7 @@ public:
 
     Add(expr *lhs, expr *rhs);
     bool equals(expr *e);
-    int interp();
+    Val* interp();
     bool has_variable();
     expr* subst(string s1, expr *e);
     void print(ostream &out);
@@ -75,7 +76,7 @@ public:
 
     Mult(expr* lhs, expr *rhs);
     bool equals(expr *e);
-    int interp();
+    Val* interp();
     bool has_variable();
     expr* subst(string s1, expr *e);
     void print(ostream &out);
@@ -90,7 +91,7 @@ public:
 
     Variable(string input);
     bool equals(expr *e);
-    int interp();
+    Val* interp();
     bool has_variable();
     expr* subst(string s1, expr *e);
     void print(ostream &out);
@@ -107,7 +108,7 @@ public:
 
     _let(Variable* variable, expr* rhs, expr* body);
     bool equals(expr *e);
-    int interp();
+    Val* interp();
     bool has_variable();
     expr* subst(string s1, expr *e);
     void print(ostream &out);
