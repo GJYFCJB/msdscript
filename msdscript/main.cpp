@@ -432,11 +432,7 @@ TEST_CASE("_let Pretty Print"){
                                             new Add(new Variable("x"), new Num(3)))),
                            new Num(6));
     CHECK((test7 -> to_pretty_string()) == "(7 + (_let x = _let x = 2\n               _in x + 3\n      _in x + 3)) * 6");
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> c95a9aaec3b599777332c4c2bc6ab935b6e31d15
+
 }
 
 TEST_CASE("Parse"){
