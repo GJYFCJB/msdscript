@@ -291,17 +291,18 @@ bool _let::equals(expr *e){
         && this->body->equals(t->body));
 }
 
+<<<<<<< Updated upstream
 int _let::interp(){
-    if(rhs->has_variable()) {
-        return ((this->body)->subst(((this->variable)->to_string()),
-                                    (this->rhs)))->interp();
-    }
-    else{
+
         expr *newRhs = new Num(rhs -> interp());
+=======
+Val* _let::interp(){
+
+        Val *newRhs = rhs -> interp();
+>>>>>>> Stashed changes
         return ((this->body)
                 -> subst ((this->variable)->to_string(), newRhs))
                 -> interp();
-    }
 }
 
 bool _let::has_variable(){

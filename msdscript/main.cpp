@@ -402,4 +402,95 @@ TEST_CASE("_let Pretty Print"){
                                             new Add(new Variable("x"), new Num(3)))),
                            new Num(6));
     CHECK((test7 -> to_pretty_string()) == "(7 + (_let x = _let x = 2\n               _in x + 3\n      _in x + 3)) * 6");
+<<<<<<< Updated upstream
+=======
+}
+
+TEST_CASE("Parse"){
+    //parse_Num
+    CHECK(parse_str("19")->equals(new Num(19)) );
+    CHECK(parse_str("-19")->equals(new Num(-19)) );
+    CHECK(parse_str("(19)")->equals(new Num(19)) );
+    CHECK(parse_str("(-19)")->equals(new Num(-19)) );
+
+    //parse Add
+    CHECK(parse_str("3+2")->equals(new Add(new Num(3), new Num(2))) );
+    CHECK(parse_str("(3+2)")->equals(new Add(new Num(3), new Num(2))) );
+    CHECK(parse_str("3+-2")->equals(new Add(new Num(3), new Num(-2))) );
+    CHECK(parse_str("(3)+2")->equals(new Add(new Num(3), new Num(2))) );
+    CHECK(parse_str("(3)+(2)")->equals(new Add(new Num(3), new Num(2))) );
+    CHECK(parse_str("3+(-2)")->equals(new Add(new Num(3), new Num(-2))) );
+
+    //parse mult
+    CHECK( parse_str("2+2*3")
+                   ->equals(new Add(new Num(2), new Mult(new Num(2),new Num(3)))));
+    CHECK( parse_str("2*2+3")
+                   ->equals(new Add(new Mult(new Num(2),new Num(2)), new Num(3))));
+    CHECK( parse_str("6*4*3")
+                   ->equals(new Mult(new Num(6), new Mult(new Num(4), new Num(3)))));
+    CHECK( parse_str("6+4+3")
+                   ->equals(new Add(new Num(6), new Add(new Num(4),new Num(3)))));
+    CHECK( parse_str("6*(8+3)")
+                   ->equals(new Mult(new Num(6), new Add(new Num(8),new Num(3)))));
+    CHECK( parse_str("(4+3)*8")
+                   ->equals(new Mult(new Add(new Num(4),new Num(3)),new Num(8) )));
+
+
+    //parse_var
+    CHECK( parse_str("xyz")
+                   ->equals(new Variable("xyz")));
+    CHECK( parse_str("(xyz)+(1)")
+                   ->equals(new Add(new Variable("xyz"), new Num(1))) );
+
+    //parse space and parentheses
+    CHECK( parse_str(" 13 ")
+                   ->equals(new Num(13)));
+    CHECK( parse_str(" (  13     ) ")
+                   ->equals(new Num(13)));
+    CHECK( parse_str("   11  +  1")
+                   ->equals(new Add(new Num(11),new Num(1))));
+    CHECK( parse_str(" ( 11 + (1) ) ")
+                   ->equals(new Add(new Num(11),new Num(1))));
+    CHECK( parse_str(" 11 * ( 11 + 1 ) ")
+                   ->equals(new Mult(new Num(11),new Add(new Num(11),new Num(1)))));
+    CHECK( parse_str(" ( 11 * 11 ) + 1 ")
+                   ->equals(new Add(new Mult(new Num(11),new Num(11)),new Num(1))));
+    CHECK( parse_str(" 1 + (2 * 3)")
+                   ->equals(new Add(new Num(1),new Mult(new Num(2),new Num(3)))));
+
+    //parse let
+    expr* l0 = new _let(new Variable("x"),
+                           new Num(4),
+                           new Add(new Variable("x"), new Num(1)));
+    CHECK( parse_str("_let x = 4\n_in x + 1")->equals(l0));
+
+    expr* l1 = new Add(new _let(new Variable("x"), new Num(7), new Variable("x")),
+                          new Num(9));
+    CHECK(parse_str("(_let x = 7\n _in x) + 9")->equals(l1));
+
+    expr* l2 = new Add (new Mult(new Num(7),
+                                    new _let(new Variable("x"), new Num(9), new Variable("x"))),
+                           new Num(3));
+
+    CHECK(parse_str("7 * (_let x = 9\n     _in x) + 3")->equals(l2));
+
+    expr* l3 = new _let(new Variable("x"),
+                           new Num(7),
+                           new _let(new Variable("x"), new Num(2),
+                                    new Add(new Variable("x"), new Num(2))));
+    CHECK(parse_str("_let x = 7\n_in _let x = 2\n    _in x + 2")->equals(l3));
+    CHECK(parse_str("(7 + (_let x = _let x = 2 _in x + 3 _in x + 3)) * 6")->equals(new Mult(new Add(new Num(7),
+                                   new _let(new Variable("x"),
+                                            new _let(new Variable("x"),
+                                                     new Num(2),
+                                                     new Add(new Variable("x"), new Num(3))),
+                                            new Add(new Variable("x"), new Num(3)))),
+                           new Num(6))));
+
+    CHECK( parse_str("_let x = _let x = 7 _in x + 2 _in x + 2")->equals(new _let(new Variable("x"),
+             new _let(new Variable("x"), new Num(7),
+                      new Add(new Variable("x"), new Num(2))),
+             new Add(new Variable("x"), new Num(2)))));
+
+>>>>>>> Stashed changes
 }
