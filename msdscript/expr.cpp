@@ -4,7 +4,7 @@
 
 
 #include "expr.hpp"
-
+#include "Val.h"
 #include<iostream>
 #include<stdexcept>
 #include <sstream>
@@ -13,7 +13,7 @@ using namespace std;
 
 string expr::to_string(){
     std::stringstream ss;
-    this -> print(ss);
+    this ->print(ss);
     return ss.str();
 }
 
@@ -23,8 +23,6 @@ void expr::pretty_print(std::ostream &out){
     this -> pretty_print_at(out, prec_none, 0, 0, 0);
 }
 
-
-
 string expr::to_pretty_string(){
     std::stringstream ss;
     this -> pretty_print(ss);
@@ -33,8 +31,9 @@ string expr::to_pretty_string(){
 
 //override pure virtual method of interface
 //Class Num--------------------------------------------------------------------------
-Num::Num(int val){
-    this->val = val;
+Num::Num(int val_){
+    this->dig = val_;
+    Val* val = new NumVal(val_);
 }
 
 bool Num::equals(expr *e) {
@@ -42,11 +41,11 @@ bool Num::equals(expr *e) {
     if (t == NULL)
         return false;
     else
-        return (this->val == t->val);
+        return (this->dig == t->dig);
 }
 
-int Num::interp(){
-    return this->val;
+Val * Num::interp(){
+    return new NumVal(dig);
 }
 
 bool Num::has_variable(){
@@ -58,7 +57,7 @@ expr* Num::subst(string s1, expr *e){
 }
 
 void Num::print(ostream &out){
-    out<<this->val;
+    out<<this->dig;
 }
 
 void Num::pretty_print(ostream &out){
@@ -66,10 +65,8 @@ void Num::pretty_print(ostream &out){
 }
 
 void Num:: pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy){
-//    stringstream ss;
-//    ss << this->val;
-//    string str = ss.str();
-    out<<this->val;
+
+    out<<this->dig;
 }
 
 
@@ -88,18 +85,15 @@ bool Add::equals(expr *e) {
         return (this->lhs->equals(t->lhs)  && this->rhs->equals(t -> rhs));
 }
 
-int Add::interp() {
+Val* Add::interp() {
 //Those methods should not use `dynamic_cast` (which should only be used in `equals`)
     // You should recur to `interp` for `lhs` and `rhs`, instead.
-//    Num *l = dynamic_cast<Num*>(this->lhs);
-//    Num *r = dynamic_cast<Num*>(this->rhs);
-        return (this->rhs->interp() + this->lhs->interp());
-//    else(throw std::runtime_error("Variable has no value"));
+    //why does not work
+        return lhs->interp()->addTo(rhs->interp());
 }
 
 bool Add::has_variable(){
-    if(this->lhs->has_variable()||this->rhs->has_variable()) return true;
-    return false;
+    return this->lhs->has_variable()||this->rhs->has_variable();
 }
 
 expr* Add::subst(string s1, expr *e){
@@ -164,17 +158,16 @@ bool Mult::equals(expr *e) {
         return (this->lhs->equals(t->lhs)  && this->rhs->equals(t -> rhs) );
 }
 
-int Mult::interp() {
+Val* Mult::interp() {
 //    Num *l = dynamic_cast<Num*>(this->lhs);
 //    Num *r = dynamic_cast<Num*>(this->rhs);
 //    if(this->rhs!=NULL && this->lhs!=NULL && this->interp_())
-        return (this->rhs->interp() * this->lhs->interp());
+        return (this->rhs->interp()->multWith(this->lhs->interp()));
 //    else(throw std::runtime_error("Variable has no value"));
 }
 
 bool Mult::has_variable(){
-    if(this->lhs->has_variable()||this->rhs->has_variable()) return true;
-    return false;
+    return (this->lhs->has_variable()||this->rhs->has_variable());
 }
 
 expr* Mult::subst(string s1, expr *e){
@@ -237,13 +230,13 @@ bool Variable::equals(expr *e) {
         return (this->s == t->s);
 }
 
-int Variable::interp(){
+Val* Variable::interp(){
     throw std::runtime_error("Variable has no value");
 }
 
+
 bool Variable::has_variable(){
-    if(this->s != "") return true;
-    return false;
+    return true;
 }
 
 expr* Variable::subst(string s1, expr *e){
@@ -291,18 +284,11 @@ bool _let::equals(expr *e){
         && this->body->equals(t->body));
 }
 
-<<<<<<< Updated upstream
-int _let::interp(){
-
-        expr *newRhs = new Num(rhs -> interp());
-=======
 Val* _let::interp(){
-
-        Val *newRhs = rhs -> interp();
->>>>>>> Stashed changes
-        return ((this->body)
-                -> subst ((this->variable)->to_string(), newRhs))
-                -> interp();
+    Val *newRhs = rhs -> interp();
+    return ((this->body)
+            -> subst ((this->variable)->to_string(), newRhs->to_expr()))
+            -> interp();
 }
 
 bool _let::has_variable(){
@@ -377,354 +363,6 @@ void _let::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool is
 
         this->body->pretty_print_at(out, p, false, false, occupy+4);
     }
-
 }
-//string _let::to_string();
-//
-///*
-// * Test
-// */
-//TEST_CASE("equals"){
-//
-//    //test objects
-//    Num n1(3);
-//    Variable v1("Jin");
-//
-//    expr *f1 = new Num(2);
-//    expr *f2 = new Num(3);
-//    expr *f3 = new Num(4);
-//    expr *f4 = new Num(5);
-//
-//    expr *e0 = new Num(3);
-//    expr *e1 = new Num(4);
-//    expr *e2 = new Add(f1,e0);
-//    expr *e3 = new Add(f3,f4);
-//    expr *e4 = new Mult(f3,f4);
-//    expr *e5 = new Mult(f3,f3);
-//    expr *e6 = new Variable("Jin");
-//    expr *e7 = new Variable("Jia");
-//
-//    Add a1(f1, f2);
-//
-//    Mult m1(f3,f4);
-//
-//    //test expression Num
-//    CHECK(n1.equals(e0));
-//    CHECK(!n1.equals(e1));
-//    CHECK(!n1.equals(e2));
-//    CHECK(!n1.equals(e4));
-//    CHECK(!n1.equals(e7));
-//
-//    //test expression Add
-//    CHECK(a1.equals(e2));
-//    CHECK(!a1.equals(e3));
-//    CHECK(!a1.equals(e1));
-//    CHECK(!a1.equals(e5));
-//    CHECK(!a1.equals(e7));
-//
-//    //test expression Muti
-//    CHECK(m1.equals(e4));
-//    CHECK(!m1.equals(e5));
-//    CHECK(!m1.equals(e3));
-//    CHECK(!m1.equals(e0));
-//    CHECK(!m1.equals(e7));
-//
-//    //test expression Variable
-//    CHECK(v1.equals(e6));
-//    CHECK(!v1.equals(e7));
-//    CHECK(!v1.equals(e1));
-//    CHECK(!v1.equals(e2));
-//    CHECK(!v1.equals(e3));
-//    CHECK(!v1.equals(e4));
-//}
-//TEST_CASE("interp"){
-//    Num n1(3);
-//    Variable v1("Jin");
-//    expr *f1 = new Num(2);
-//    expr *f2 = new Num(3);
-//    expr *f3 = new Num(4);
-//    expr *f4 = new Num(5);
-//    Add a1(f1, f2);
-//    Mult m1(f3,f4);
-//    int res_Num = n1.interp();
-//    int res_Add = a1.interp();
-//    int res_Mult = m1.interp();
-//    expr *f5 = new Add((new Variable("s")),
-//                       (new Num(1)));
-//    expr *f6 = new Mult((new Variable("s")),
-//                        (new Num(1)));
-//    //test interp
-//    CHECK(res_Num==3);
-//    CHECK(res_Add==5);
-//    CHECK(res_Mult==20);
-//    CHECK_THROWS_WITH(f5->interp(),"Variable has no value" );
-//    CHECK_THROWS_WITH( v1.interp(), "Variable has no value" );
-//    CHECK_THROWS_WITH(f6->interp(),"Variable has no value" );
-//}
-//
-//
-//TEST_CASE("has_variable"){
-//    //test has_variable
-//    CHECK((new Num(5))->has_variable()== false);
-//    CHECK((new Add((new Variable("s")),(new Num(1)))));
-//    CHECK((new Mult((new Variable("s")),(new Num(1)))));
-//    CHECK((new Add((new Num(3)),(new Num(1)))));
-//    CHECK((new Mult((new Num(3)),(new Num(1)))));
-//    CHECK(new Variable("s"));
-//}
-//TEST_CASE("subst"){
-//    //test subst
-//
-//    expr *add = new Add(new Add(new Variable("xyz"), new Num(10)), new Num(11));
-//    expr *resAdd = new Add(new Add(new Num(20), new Num(10)), new Num(11));
-//    expr *mut = new Mult(new Add(new Variable("xyz"), new Num(10)), new Num(11));
-//    expr *resMut = new Mult(new Add(new Num(20), new Num(10)), new Num(11));
-//    CHECK( (new Add(new Variable("x"), new Num(7)))
-//                   ->subst("x", new Variable("y"))
-//                   ->equals(new Add(new Variable("y"), new Num(7))) );
-//
-//    CHECK(add->subst("xyz", new Num(20))->equals(resAdd));
-//    CHECK(mut->subst("xyz", new Num(20))->equals(resMut));
-//
-//    CHECK( (new Mult(new Variable("x"), new Num(7)))
-//                   ->subst("x", new Variable("y"))
-//                   ->equals(new Mult(new Variable("y"), new Num(7))) );
-//
-//
-//}
-//
-//TEST_CASE("print && pretty_print"){
-//
-//    //-----test print
-//    stringstream out("");
-//    expr *f1 = new Num(2);
-//    f1->print(out);
-//    CHECK( out.str() == "2");
-//
-//    stringstream out1("");
-//    expr *f2 = new Add(new Num(1), new Add(new Num(2), new Num(3)));
-//    f2->print(out1);
-//    CHECK(out1.str() == "(1+(2+3))");
-//
-//    stringstream out2("");
-//    expr *f3 = new Add(new Num(1), new Mult(new Num(2), new Num(3)));
-//    f3->print(out2);
-//    CHECK(out2.str() == "(1+(2*3))");
-//
-//    //---test pretty_print
-//    Num* num1 = new Num(1);
-//    Num* num2 = new Num(2);
-//    Num* num3 = new Num(3);
-//    Mult* m0 = new Mult(num1,num2);
-//    Mult* m2 = new Mult(m0,num3);
-//    Mult* m4 = new Mult(num3,m0);
-//    Add* add = new Add(num1,m0);
-//    Add* add2 = new Add(m0,m2);
-//    Add* add1 = new Add(num2,num3);
-//    Mult* m3 = new Mult(num3,add1);
-//    Variable *v = new Variable("s");
-//
-//    CHECK(m2->to_string() == "(1 * 2) * 3");
-//    CHECK(m4->to_string() == "3 * 1 * 2");
-//    CHECK(add->to_string() == "1 + 1 * 2");
-////    CHECK(add2->to_string() =="(1 * 2) + (1 * 2) * 3");
-//    CHECK(m3->to_string() == "3 * (2 + 3)");
-//    CHECK(v->to_string()=="s" );
-//
-//}
-//
-//TEST_CASE("_let Subst"){
-//    // test1 =
-//    //          _let x = 4;
-//    //          _in 7;          -> subst ("x", 1)
-//    expr *test1 = new _let(new Variable("x"), new Num(4), new Num(7));
-//    CHECK((test1 -> subst("x", new Num(1))) -> equals(test1));
-//    // test2 =
-//    //          _let x = x + 2;
-//    //          _in x + 2;          -> subst ("x", 5)
-//    expr *test2 = new _let(new Variable("x"),
-//                           new Add(new Variable("x"), new Num(2)),
-//                           new Add(new Variable("x"), new Num(2)));
-//    CHECK(test2 -> subst("x", new Num(5)) -> equals(
-//            new _let(new Variable("x"),
-//                     new Add(new Num(5), new Num(2)),
-//                     new Add(new Variable("x"), new Num(2)))));
-//    // test3 =
-//    //          _let x = x + 2;
-//    //          _in x + 2;          -> subst ("y", 5)
-//    expr *test3 = new _let(new Variable("x"),
-//                           new Add(new Variable("x"), new Num(2)),
-//                           new Add(new Variable("x"), new Num(2)));
-//    CHECK(test3 -> subst("y", new Num(5)) -> equals(test3));
-//}
-//
-//TEST_CASE("_let Equals"){
-//    // _let x = 6;
-//    // _in x + 3;
-//    _let *test = new _let(new Variable("x"), new Num(6), new Add(new Variable("x"), new Num(3)));
-//    CHECK(test-> equals(new _let(new Variable("x"), new Num(6), new Add(new Variable("x"), new Num(3)))) == true);
-//    CHECK(test-> equals(new _let(new Variable("y"), new Num(6), new Add(new Variable("y"), new Num(3)))) == false);
-//    CHECK(test-> equals(new Num(6)) == false);
-//}
-//
-//TEST_CASE("_let Has Variable"){
-//    // test1 =
-//    //          _let x = 2;
-//    //          _in 4;
-//    expr *test1 = new _let(new Variable("x"), new Num(2), new Num(4));
-//    CHECK(test1 -> has_variable() == false);
-//    // test2 =
-//    //          _let x = x + 4;
-//    //          _in 7;
-//    expr *test2 = new _let(new Variable("x"),
-//                           new Add(new Variable("x"), new Num(4)),
-//                           new Num(7));
-//    CHECK(test2 -> has_variable() == true);
-//    // test3 =
-//    //          _let x = 2;
-//    //          _in x + 7;
-//    expr *test3 = new _let(new Variable("x"),
-//                           new Num(2),
-//                           new Add(new Variable("x"), new Num(7)));
-//    CHECK(test3 -> has_variable() == true);
-//    // test4 =
-//    //          _let x = x + 6;
-//    //          _in x + 5;
-//    expr *test4 = new _let(new Variable("x"),
-//                           new Add(new Variable("x"), new Num(6)),
-//                           new Add(new Variable("x"), new Num(5)));
-//    CHECK(test4 -> has_variable() == true);
-//}
-//
-//TEST_CASE("_let Print"){
-//    // test1 =
-//    //        _let x = 12;
-//    //        _in x + 1;
-//    expr *test1 = new _let(new Variable("x"),
-//                           new Num(12),
-//                           new Add(new Variable("x"), new Num(1)));
-//    CHECK((test1 -> to_string()) == "(_let x=12 _in (x+1))");
-//    // test2 =
-//    //        _let x = 12;
-//    //        _in _let x = 4;
-//    //            _in x + 2;
-//    expr *test2 = new _let(new Variable("x"),
-//                           new Num(12),
-//                           new _let(new Variable("x"),
-//                                    new Num(4),
-//                                    new Add(new Variable("x"), new Num(2))));
-//    CHECK((test2 -> to_string()) == "(_let x=12 _in (_let x=4 _in (x+2)))");
-//    // test3 =
-//    //        _let x = y + 2;
-//    //        _in y + 3;
-//    expr *test3 = new _let(new Variable("x"),
-//                           new Add(new Variable("y"), new Num(2)),
-//                           new Add(new Variable("y"), new Num(3)));
-//    CHECK((test3 -> to_string()) == "(_let x=(y+2) _in (y+3))");
-//}
-//
-//TEST_CASE("_let Interp"){
-//    // test1 =
-//    //        _let x = 4;
-//    //        _in 7;
-//    expr *test1 = new _let(new Variable("x"), new Num(4), new Num(7));
-//    CHECK( test1 -> interp() == 7);
-//    // test2 =
-//    //        _let x = 2;
-//    //        _in x + 1;
-//    expr *test2 = new _let(new Variable("x"),
-//                           new Num(2),
-//                           new Add(new Variable("x"), new Num(1)));
-//    CHECK((test2 -> interp()) == 3);
-//    // test3 =
-//    //        _let x = 7;
-//    //        _in y + 2;
-//    expr *test3 = new _let(new Variable("x"),
-//                           new Num(7),
-//                           new Add(new Variable("y"), new Num(2)));
-//    CHECK_THROWS_WITH( test3 -> interp(),
-//                       "Variable has no value" );
-//    // test4 =
-//    //        _let x = 4;
-//    //        _in _let x = 7;
-//    //            _in x + 1;
-//    expr *test4 = new _let(new Variable("x"),
-//                           new Num(4),
-//                           new _let(new Variable("x"),
-//                                    new Num(7),
-//                                    new Add(new Variable("x"), new Num(1))));
-//    CHECK(test4 -> interp() == 8);
-//
-//    // test6 =
-//    //        _let x = 9;
-//    //        _in _let x = x + 2;
-//    //            _in x + 2;
-//    expr *test6 = new _let(new Variable("x"), new Num(9),
-//                           new _let(new Variable("x"),
-//                                    new Add(new Variable("x"), new Num(2)),
-//                                    new Add(new Variable("x"), new Num(2))));
-//    CHECK((test6 -> interp()) == 13);
-//
-//}
-//
-//TEST_CASE("_let Pretty Print"){
-//    // test1 =
-//    //        _let x = 4
-//    //        _in x + 1
-//    expr *test1 = new _let(new Variable("x"),
-//                           new Num(4),
-//                           new Add(new Variable("x"), new Num(1)));
-//    CHECK((test1 -> to_string_p()) == "_let x = 4\n_in x + 1");
-//    // test2 =
-//    //        (_let x = 7
-//    //        _in x) + 9
-//    expr *test2 = new Add(new _let(new Variable("x"), new Num(7), new Variable("x")),
-//                          new Num(9));
-//    CHECK((test2 -> to_string_p()) == "(_let x = 7\n _in x) + 9");
-//    // test3 =
-//    //        7 * (_let x = 9
-//    //             _in  x) + 3
-//    expr *test3 = new Add (new Mult(new Num(7),
-//                                    new _let(new Variable("x"), new Num(9), new Variable("x"))),
-//                           new Num(3));
-//    CHECK((test3 -> to_string_p()) == "7 * (_let x = 9\n     _in x) + 3");
-//    // test4 =
-//    //        6 * _let x = 9
-//    //            _in  x + 1
-//    expr *test4 = new Mult(new Num(6),
-//                           new _let(new Variable("x"),
-//                                    new Num(9),
-//                                    new Add(new Variable("x"), new Num(1))));
-//    CHECK((test4 -> to_string_p()) == "6 * _let x = 9\n    _in (x + 1)");
-//    // test5 =
-//    //        _let x = 7
-//    //        _in _let x = 2
-//    //            _in x + 2
-//    expr *test5 = new _let(new Variable("x"),
-//                           new Num(7),
-//                           new _let(new Variable("x"), new Num(2),
-//                                    new Add(new Variable("x"), new Num(2))));
-//    CHECK((test5 -> to_string_p()) == "_let x = 7\n_in _let x = 2\n    _in x + 2");
-//    // test6 =
-//    //        _let x = _let x = 7
-//    //                 _in x + 2
-//    //        _in x + 2
-//    expr *test6 = new _let(new Variable("x"),
-//                           new _let(new Variable("x"), new Num(7),
-//                                    new Add(new Variable("x"), new Num(2))),
-//                           new Add(new Variable("x"), new Num(2)));
-//    CHECK((test6 -> to_string_p()) == "_let x = _let x = 7\n         _in x + 2\n_in x + 2");
-//    // test7 =
-//    //       (7 + (_let x = _let x = 2
-//    //                      _in x + 3
-//    //             _in x + 3)) * 6
-//    expr *test7 = new Mult(new Add(new Num(7),
-//                                   new _let(new Variable("x"),
-//                                            new _let(new Variable("x"),
-//                                                     new Num(2),
-//                                                     new Add(new Variable("x"), new Num(3))),
-//                                            new Add(new Variable("x"), new Num(3)))),
-//                           new Num(6));
-//    CHECK((test7 -> to_string_p()) == "(7 + (_let x = _let x = 2\n               _in x + 3\n      _in x + 3)) * 6");
-//}
+
 
