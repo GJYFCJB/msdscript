@@ -286,18 +286,12 @@ bool _let::equals(expr *e){
 
 Val* _let::interp(){
 
-//    Val *val = rhs->interp();
-//    return body->subst(this->to_string(), val->to_expr())->interp();
-    if(rhs) {
-        return ((this->body)->subst(((this->variable)->to_string()),
-                                    (this->rhs)))->interp();
-    }
-    else{
+
         Val *newRhs = rhs -> interp();
         return ((this->body)
                 -> subst ((this->variable)->to_string(), newRhs->to_expr()))
                 -> interp();
-    }
+
 }
 
 bool _let::has_variable(){
