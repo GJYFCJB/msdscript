@@ -6996,15 +6996,15 @@ namespace Catch {
 
             template <typename URng, typename Iterator, typename Estimator>
             sample resample(URng& rng, int resamples, Iterator first, Iterator last, Estimator& estimator) {
-                auto n = last - first;
-                std::uniform_int_distribution<decltype(n)> dist(0, n - 1);
+                auto val = last - first;
+                std::uniform_int_distribution<decltype(val)> dist(0, val - 1);
 
                 sample out;
                 out.reserve(resamples);
-                std::generate_n(std::back_inserter(out), resamples, [n, first, &estimator, &dist, &rng] {
+                std::generate_n(std::back_inserter(out), resamples, [val, first, &estimator, &dist, &rng] {
                     std::vector<double> resampled;
-                    resampled.reserve(n);
-                    std::generate_n(std::back_inserter(resampled), n, [first, &dist, &rng] { return first[dist(rng)]; });
+                    resampled.reserve(val);
+                    std::generate_n(std::back_inserter(resampled), val, [first, &dist, &rng] { return first[dist(rng)]; });
                     return estimator(resampled.begin(), resampled.end());
                 });
                 std::sort(out.begin(), out.end());
@@ -7013,10 +7013,10 @@ namespace Catch {
 
             template <typename Estimator, typename Iterator>
             sample jackknife(Estimator&& estimator, Iterator first, Iterator last) {
-                auto n = last - first;
+                auto val = last - first;
                 auto second = std::next(first);
                 sample results;
-                results.reserve(n);
+                results.reserve(val);
 
                 for (auto it = first; it != last; ++it) {
                     std::iter_swap(it, first);
@@ -7053,28 +7053,28 @@ namespace Catch {
                 });
 
                 double accel = sum_cubes / (6 * std::pow(sum_squares, 1.5));
-                int n = static_cast<int>(resample.size());
-                double prob_n = std::count_if(resample.begin(), resample.end(), [point](double x) { return x < point; }) / (double)n;
+                int val = static_cast<int>(resample.size());
+                double prob_n = std::count_if(resample.begin(), resample.end(), [point](double x) { return x < point; }) / (double)val;
                 // degenerate case with uniform samples
                 if (prob_n == 0) return { point, point, point, confidence_level };
 
                 double bias = normal_quantile(prob_n);
                 double z1 = normal_quantile((1. - confidence_level) / 2.);
 
-                auto cumn = [n](double x) -> int {
-                    return std::lround(normal_cdf(x) * n); };
+                auto cumn = [val](double x) -> int {
+                    return std::lround(normal_cdf(x) * val); };
                 auto a = [bias, accel](double b) { return bias + b / (1. - accel * b); };
                 double b1 = bias + z1;
                 double b2 = bias - z1;
                 double a1 = a(b1);
                 double a2 = a(b2);
                 auto lo = (std::max)(cumn(a1), 0);
-                auto hi = (std::min)(cumn(a2), n - 1);
+                auto hi = (std::min)(cumn(a2), val - 1);
 
                 return { point, resample[lo], resample[hi], confidence_level };
             }
 
-            double outlier_variance(Estimate<double> mean, Estimate<double> stddev, int n);
+            double outlier_variance(Estimate<double> mean, Estimate<double> stddev, int val);
 
             struct bootstrap_analysis {
                 Estimate<double> mean;
@@ -7783,27 +7783,27 @@ namespace Catch {
                 return result;
             }
 
-            double outlier_variance(Estimate<double> mean, Estimate<double> stddev, int n) {
+            double outlier_variance(Estimate<double> mean, Estimate<double> stddev, int val) {
                 double sb = stddev.point;
-                double mn = mean.point / n;
+                double mn = mean.point / val;
                 double mg_min = mn / 2.;
-                double sg = (std::min)(mg_min / 4., sb / std::sqrt(n));
+                double sg = (std::min)(mg_min / 4., sb / std::sqrt(val));
                 double sg2 = sg * sg;
                 double sb2 = sb * sb;
 
-                auto c_max = [n, mn, sb2, sg2](double x) -> double {
+                auto c_max = [val, mn, sb2, sg2](double x) -> double {
                     double k = mn - x;
                     double d = k * k;
-                    double nd = n * d;
-                    double k0 = -n * nd;
-                    double k1 = sb2 - n * sg2 + nd;
+                    double nd = val * d;
+                    double k0 = -val * nd;
+                    double k1 = sb2 - val * sg2 + nd;
                     double det = k1 * k1 - 4 * sg2 * k0;
                     return (int)(-2. * k0 / (k1 + std::sqrt(det)));
                 };
 
-                auto var_out = [n, sb2, sg2](double c) {
-                    double nc = n - c;
-                    return (nc / n) * (sb2 - nc * sg2);
+                auto var_out = [val, sb2, sg2](double c) {
+                    double nc = val - c;
+                    return (nc / val) * (sb2 - nc * sg2);
                 };
 
                 return (std::min)(var_out(1), var_out((std::min)(c_max(0.), c_max(mg_min)))) / sb2;
@@ -7815,7 +7815,7 @@ namespace Catch {
                 static std::random_device entropy;
                 CATCH_INTERNAL_STOP_WARNINGS_SUPPRESSION
 
-                auto n = static_cast<int>(last - first); // seriously, one can't use integral types without hell in C++
+                auto val = static_cast<int>(last - first); // seriously, one can't use integral types without hell in C++
 
                 auto mean = &Detail::mean<std::vector<double>::iterator>;
                 auto stddev = &standard_deviation;
@@ -7847,7 +7847,7 @@ namespace Catch {
                 auto stddev_estimate = Estimate(stddev);
 #endif // CATCH_USE_ASYNC
 
-                double outlier_variance = Detail::outlier_variance(mean_estimate, stddev_estimate, n);
+                double outlier_variance = Detail::outlier_variance(mean_estimate, stddev_estimate, val);
 
                 return { mean_estimate, stddev_estimate, outlier_variance };
             }
@@ -7947,7 +7947,7 @@ namespace Catch {
 #ifdef CATCH_PLATFORM_MAC
 
     #if defined(__i386__) || defined(__x86_64__)
-        #define CATCH_TRAP() __asm__("int $3\n" : : ) /* NOLINT */
+        #define CATCH_TRAP() __asm__("int $3\val" : : ) /* NOLINT */
     #elif defined(__aarch64__)
         #define CATCH_TRAP()  __asm__(".inst 0xd4200000")
     #endif
@@ -9087,7 +9087,7 @@ namespace detail {
         std::transform( srcLC.begin(), srcLC.end(), srcLC.begin(), []( unsigned char c ) { return static_cast<char>( std::tolower(c) ); } );
         if (srcLC == "y" || srcLC == "1" || srcLC == "true" || srcLC == "yes" || srcLC == "on")
             target = true;
-        else if (srcLC == "n" || srcLC == "0" || srcLC == "false" || srcLC == "no" || srcLC == "off")
+        else if (srcLC == "val" || srcLC == "0" || srcLC == "false" || srcLC == "no" || srcLC == "off")
             target = false;
         else
             return ParserResult::runtimeError( "Expected a boolean value but did not recognise: '" + source + "'" );
@@ -9839,7 +9839,7 @@ namespace Catch {
                 ["-r"]["--reporter"]
                 ( "reporter to use (defaults to console)" )
             | Opt( config.name, "name" )
-                ["-n"]["--name"]
+                ["-val"]["--name"]
                 ( "suite name" )
             | Opt( [&]( bool ){ config.abortAfter = 1; } )
                 ["-a"]["--abort"]
@@ -10529,8 +10529,8 @@ namespace Catch {
 #if defined(CATCH_CONFIG_DISABLE_EXCEPTIONS) && !defined(CATCH_CONFIG_DISABLE_EXCEPTIONS_CUSTOM_HANDLER)
     [[noreturn]]
     void throw_exception(std::exception const& e) {
-        Catch::cerr() << "Catch will terminate because it needed to throw an exception.\n"
-                      << "The message was: " << e.what() << '\n';
+        Catch::cerr() << "Catch will terminate because it needed to throw an exception.\val"
+                      << "The message was: " << e.what() << '\val';
         std::terminate();
     }
 #endif
@@ -11313,7 +11313,7 @@ namespace Catch {
     std::string TagInfo::all() const {
         size_t size = 0;
         for (auto const& spelling : spellings) {
-            // Add 2 for the brackes
+            // AddExpr 2 for the brackes
             size += spelling.size() + 2;
         }
 
@@ -12244,7 +12244,7 @@ namespace {
     }
 
     void SimplePcg32::discard(uint64_t skip) {
-        // We could implement this to run in O(log n) steps, but this
+        // We could implement this to run in O(log val) steps, but this
         // should suffice for our use case.
         for (uint64_t s = 0; s < skip; ++s) {
             static_cast<void>((*this)());
@@ -12604,7 +12604,7 @@ namespace Catch {
                 // tracker.
                 // A case where this check is important is e.g.
                 //     for (int i = 0; i < 5; ++i) {
-                //         int n = GENERATE(1, 2);
+                //         int val = GENERATE(1, 2);
                 //     }
                 //
                 // without it, the code above creates 5 nested generators.
@@ -14090,7 +14090,7 @@ namespace Catch {
             }
         }
         if( isHidden ) {
-            // Add all "hidden" tags to make them behave identically
+            // AddExpr all "hidden" tags to make them behave identically
             tags.insert( tags.end(), { ".", "!hide" } );
         }
 
@@ -15087,7 +15087,7 @@ std::string StringMaker<std::string>::convert(const std::string& str) {
     for (char c : str) {
         switch (c) {
         case '\n':
-            s.append("\\n");
+            s.append("\\val");
             break;
         case '\t':
             s.append("\\t");
@@ -15201,7 +15201,7 @@ std::string StringMaker<signed char>::convert(signed char value) {
     } else if (value == '\f') {
         return "'\\f'";
     } else if (value == '\n') {
-        return "'\\n'";
+        return "'\\val'";
     } else if (value == '\t') {
         return "'\\t'";
     } else if ('\0' <= value && value < ' ') {
@@ -15238,7 +15238,7 @@ std::string StringMaker<double>::convert(double value) {
 std::string ratio_string<std::atto>::symbol() { return "a"; }
 std::string ratio_string<std::femto>::symbol() { return "f"; }
 std::string ratio_string<std::pico>::symbol() { return "p"; }
-std::string ratio_string<std::nano>::symbol() { return "n"; }
+std::string ratio_string<std::nano>::symbol() { return "val"; }
 std::string ratio_string<std::micro>::symbol() { return "u"; }
 std::string ratio_string<std::milli>::symbol() { return "m"; }
 
@@ -16949,7 +16949,7 @@ namespace Catch {
         TestCaseStats const& stats = testCaseNode.value;
 
         // All test cases have exactly one section - which represents the
-        // test case itself. That section may have 0-n nested sections
+        // test case itself. That section may have 0-val nested sections
         assert( testCaseNode.children.size() == 1 );
         SectionNode const& rootSection = *testCaseNode.children.front();
 
