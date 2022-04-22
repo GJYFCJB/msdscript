@@ -23,99 +23,151 @@ typedef enum {
 class Val;
 class expr{
 public:
-    virtual bool equals(expr *e) = 0;
+    
     /*The value of a number is the number
 The value of an addition expression is the sum of the subexpression values
 The value of a multiplication expression is the product of the subexpression values*/
     virtual Val* interp() = 0;
+    virtual bool equals(expr *e) = 0;
     virtual bool has_variable() = 0;
-    virtual expr* subst(string s1, expr *e) = 0;
-    virtual void print(ostream &out) = 0;
-    virtual void pretty_print(ostream &out) = 0;
-    virtual void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy)= 0;
-    string to_string();
+    virtual expr* subst(string s1, Val *val) = 0;
+    virtual void print(ostream &out);
+    virtual void pretty_print(ostream &out);
+    virtual void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
+    virtual string to_string();
     string to_pretty_string();
 };
 
-class Num : public expr {
+class NumExpr : public expr {
 public:
-    int dig;
+    int rep;
     Val* val;
-    
 
-    Num(int val) ;
+    NumExpr(int val) ;
     bool equals(expr *e);
     Val * interp();
     bool has_variable();
-    expr* subst(string s1, expr *e);
+    expr* subst(string s1, Val *val);
     void print(ostream &out);
     void pretty_print(ostream &out);
     void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
 };
 
-class Add : public expr {
+class AddExpr : public expr {
 public:
     expr *lhs;
     expr *rhs;
 
-    Add(expr *lhs, expr *rhs);
+    AddExpr(expr *lhs, expr *rhs);
     bool equals(expr *e);
     Val* interp();
     bool has_variable();
-    expr* subst(string s1, expr *e);
+    expr* subst(string s1, Val *val);
     void print(ostream &out);
     void pretty_print(ostream &out);
     void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
     string to_string();
 };
 
-class Mult : public expr {
+class MultExpr : public expr {
 public:
     expr *lhs;
     expr *rhs;
 
-    Mult(expr* lhs, expr *rhs);
+    MultExpr(expr* lhs, expr *rhs);
     bool equals(expr *e);
     Val* interp();
     bool has_variable();
-    expr* subst(string s1, expr *e);
+    expr* subst(string s1, Val *val);
     void print(ostream &out);
     void pretty_print(ostream &out);
     void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
     string to_string();
 };
 
-class Variable : public expr{
+class VarExpr : public expr{
 public:
     string s;
 
-    Variable(string input);
+    VarExpr(string input);
     bool equals(expr *e);
     Val* interp();
     bool has_variable();
-    expr* subst(string s1, expr *e);
+    expr* subst(string s1, Val *val);
     void print(ostream &out);
     void pretty_print(ostream &out);
     void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
     string to_string();
 };
 
-class _let : public expr{
+class letExpr : public expr{
 public:
-    Variable* variable;
+    VarExpr* variable;
     expr* rhs;
     expr* body;
 
-    _let(Variable* variable, expr* rhs, expr* body);
+    letExpr(VarExpr* variable, expr* rhs, expr* body);
     bool equals(expr *e);
     Val* interp();
     bool has_variable();
-    expr* subst(string s1, expr *e);
+    expr* subst(string s1, Val *val);
     void print(ostream &out);
     void pretty_print(ostream &out);
     void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
     string to_string();
 };
+
+class BoolExpr : public expr{
+public:
+    bool var;
+
+    BoolExpr(bool var);
+    bool equals(expr* expr);
+    bool has_variable();
+
+    expr* subst(string s1, Val *val);
+    virtual std::string to_string();
+    /*The value of a number is the number
+    The value of an addition expression is the sum of the subexpression values
+    The value of a multiplication expression is the product of the subexpression values*/
+    Val* interp();
+    void print(ostream &out);
+
+};
+
+class EqualExpr : public expr {
+public:
+    expr* lhs;
+    expr* rhs;
+
+    EqualExpr(expr* lhs, expr* rhs);
+    bool equals(expr* other_expr);
+    bool has_variable();
+
+    expr* subst(string s1, Val* val);
+    virtual std::string to_string();
+    Val* interp();
+    void print(ostream &out);
+};
+
+class IfExpr : public expr {
+public:
+    expr*  test_part;
+    expr*  then_part;
+    expr*  else_part;
+
+    IfExpr(expr* test_part, expr* then_part, expr* else_part);
+    bool equals(expr* other_expr);
+    bool has_variable();
+
+    expr* subst(std::string var, Val* val);
+    virtual std::string to_string();
+    Val* interp();
+    void print(ostream &out);
+
+};
+
+
 
 
 #endif //expr_hpp

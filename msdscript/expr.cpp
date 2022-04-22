@@ -17,9 +17,7 @@ string expr::to_string(){
     return ss.str();
 }
 
-
 void expr::pretty_print(std::ostream &out){
-//    this -> pretty_print_at(os, false, false, false);
     this -> pretty_print_at(out, prec_none, 0, 0, 0);
 }
 
@@ -29,96 +27,98 @@ string expr::to_pretty_string(){
     return ss.str();
 }
 
+void expr::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy){
+
+}
+
+//
+//bool expr::equals(expr *e){
+//    return false;
+//}
+
 //override pure virtual method of interface
-//Class Num--------------------------------------------------------------------------
-Num::Num(int val_){
-    this->dig = val_;
+//Class NumExpr--------------------------------------------------------------------------
+NumExpr::NumExpr(int val_){
+    this->rep = val_;
     Val* val = new NumVal(val_);
 }
 
-bool Num::equals(expr *e) {
-    Num *t = dynamic_cast<Num*>(e);
+bool NumExpr::equals(expr *e) {
+    NumExpr *t = dynamic_cast<NumExpr*>(e);
     if (t == NULL)
         return false;
     else
-        return (this->dig == t->dig);
+        return (this->rep == t->rep);
 }
 
-Val * Num::interp(){
-    return new NumVal(dig);
+Val * NumExpr::interp(){
+    return val;
 }
 
-bool Num::has_variable(){
+bool NumExpr::has_variable(){
     return false;
 }
 
-expr* Num::subst(string s1, expr *e){
-    return this;
+expr* NumExpr::subst(string s1, Val *new_val){
+    return new NumExpr(rep);
 }
 
-void Num::print(ostream &out){
-    out<<this->dig;
+void NumExpr::print(ostream &out){
+    out<<this->rep;
 }
 
-void Num::pretty_print(ostream &out){
+void NumExpr::pretty_print(ostream &out){
     pretty_print_at(out,prec_none, false, 0,0);
 }
 
-void Num:: pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy){
+void NumExpr:: pretty_print_at(ostream &out, precedence_t p, bool isLeftInside, bool isNested, int occupy){
 
-    out<<this->dig;
+    out<<this->rep;
 }
 
 
-//Class Add--------------------------------------------------------------------------
-Add::Add(expr *lhs, expr *rhs) {
+//Class AddExpr--------------------------------------------------------------------------
+AddExpr::AddExpr(expr *lhs, expr *rhs) {
     this->lhs = lhs;
     this->rhs = rhs;
 }
 
 //override pure virtual method of interface
-bool Add::equals(expr *e) {
-    Add *t = dynamic_cast<Add*>(e);
+bool AddExpr::equals(expr *e) {
+    AddExpr *t = dynamic_cast<AddExpr*>(e);
     if (t == NULL)
         return false;
     else
         return (this->lhs->equals(t->lhs)  && this->rhs->equals(t -> rhs));
 }
 
-Val* Add::interp() {
-//Those methods should not use `dynamic_cast` (which should only be used in `equals`)
-    // You should recur to `interp` for `lhs` and `rhs`, instead.
-    //why does not work
+Val* AddExpr::interp() {
+
         return lhs->interp()->addTo(rhs->interp());
 }
 
-bool Add::has_variable(){
+bool AddExpr::has_variable(){
     return this->lhs->has_variable()||this->rhs->has_variable();
 }
 
-expr* Add::subst(string s1, expr *e){
-    return (new Add((this -> lhs) -> subst(s1,e),
-                    (this -> rhs) ->subst(s1,e)));
+expr* AddExpr::subst(string s1, Val *new_val){
+    return (new AddExpr((this -> lhs) -> subst(s1, new_val),
+                        (this -> rhs) ->subst(s1,new_val)));
 }
 
-void Add::print(ostream &out){
-//    stringstream o("");
-//    lhs->print(o);
-//    rhs->print(o);
-//    out<<"("+lhs->print(o)+ "+" +rhs->print(o)+")";
+void AddExpr::print(ostream &out){
     out<<"(";
     lhs->print(out);
     out<<"+";
     rhs->print(out);
     out<<")";
-//    return "("+lhs->print(o)+ "+" +rhs->print(o)+")";
 }
 
-void Add::pretty_print(ostream &out){
+void AddExpr::pretty_print(ostream &out){
     pretty_print_at(out,prec_none, 0,0,0);
 }
 
-void Add::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy){
+void AddExpr::pretty_print_at(ostream &out, precedence_t p, bool isLeftInside, bool isNested, int occupy){
 
     long begin = out.tellp();
     if(p<2||(p == 2&&!isLeftInside)){
@@ -137,61 +137,56 @@ void Add::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isN
     }
 }
 
-string Add::to_string(){
+string AddExpr::to_string(){
     stringstream out("");
     pretty_print(out);
     return out.str();
 }
 
-//Class Mult--------------------------------------------------------------------------
-Mult::Mult(expr* lhs, expr *rhs) {
+//Class MultExpr--------------------------------------------------------------------------
+MultExpr::MultExpr(expr* lhs, expr *rhs) {
     this->lhs = lhs;
     this->rhs = rhs;
 }
 
 //override pure virtual method of interface
-bool Mult::equals(expr *e) {
-    Mult *t = dynamic_cast<Mult*>(e);
+bool MultExpr::equals(expr *e) {
+    MultExpr *t = dynamic_cast<MultExpr*>(e);
     if (t == NULL)
         return false;
     else
         return (this->lhs->equals(t->lhs)  && this->rhs->equals(t -> rhs) );
 }
 
-Val* Mult::interp() {
-//    Num *l = dynamic_cast<Num*>(this->lhs);
-//    Num *r = dynamic_cast<Num*>(this->rhs);
-//    if(this->rhs!=NULL && this->lhs!=NULL && this->interp_())
+Val* MultExpr::interp() {
+
         return (this->rhs->interp()->multWith(this->lhs->interp()));
-//    else(throw std::runtime_error("Variable has no value"));
+
 }
 
-bool Mult::has_variable(){
+bool MultExpr::has_variable(){
     return (this->lhs->has_variable()||this->rhs->has_variable());
 }
 
-expr* Mult::subst(string s1, expr *e){
-    return (new Mult((this->lhs) ->subst(s1,e),(this -> rhs) ->subst(s1,e)));
+expr* MultExpr::subst(string s1, Val *new_val){
+    return (new MultExpr((this->lhs) ->subst(s1, new_val), (this -> rhs) ->subst(s1, new_val)));
 }
 
-void Mult::print(ostream &out){
-//    stringstream o("");
-//    lhs->print(o);
-//    rhs ->print(o);
+void MultExpr::print(ostream &out){
+
     out<<"(";
     lhs->print(out);
     out<<"*";
     rhs->print(out);
     out<<")";
-//    out<<"("+lhs->print(o)+ "*" +rhs->print(o)+")";
-//    return "("+lhs->print(o)+ "*" +rhs->print(o)+")";
+
 }
 
-void Mult::pretty_print(ostream &out){
+void MultExpr::pretty_print(ostream &out){
     pretty_print_at(out, prec_none, false,0,0);
 }
 
-void Mult::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy){
+void MultExpr::pretty_print_at(ostream &out, precedence_t p, bool isLeftInside, bool isNested, int occupy){
 //opposite to dfs we use true/false and accumulator to identify l/r side of the mult
 //from top to bottom -> get the right answer
     long begin = out.tellp();
@@ -211,56 +206,55 @@ void Mult::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool is
     }
 }
 
-string Mult::to_string(){
+string MultExpr::to_string(){
     stringstream out("");
     pretty_print(out);
     return out.str();
 }
 
-//Class Variable--------------------------------------------------------------------------
-Variable::Variable(string input) {
+//Class VarExpr--------------------------------------------------------------------------
+VarExpr::VarExpr(string input) {
     this -> s = input;
 }
 
-bool Variable::equals(expr *e) {
-    Variable *t = dynamic_cast<Variable*>(e);
+bool VarExpr::equals(expr *e) {
+    VarExpr *t = dynamic_cast<VarExpr*>(e);
     if (t == NULL)
         return false;
     else
         return (this->s == t->s);
 }
 
-Val* Variable::interp(){
-    throw std::runtime_error("Variable has no value");
+Val* VarExpr::interp(){
+    throw std::runtime_error("VarExpr has no value");
 }
 
 
-bool Variable::has_variable(){
+bool VarExpr::has_variable(){
     return true;
 }
 
-expr* Variable::subst(string s1, expr *e){
+expr* VarExpr::subst(string s1, Val *val){
     if(this->s == s1){
-        return e;
+        return val->to_expr();
     }else {
         return this;
     }
 }
 
-void Variable::print(ostream &out){
+void VarExpr::print(ostream &out){
     out<<this->s;
 }
 
-void Variable::pretty_print(ostream &out){
-
+void VarExpr::pretty_print(ostream &out){
     pretty_print_at(out,prec_none, false,0,0);
 }
 
-void Variable::pretty_print_at(ostream &out,precedence_t p,bool isInside,bool isNested,int occupy){
+void VarExpr::pretty_print_at(ostream &out, precedence_t p, bool isInside, bool isNested, int occupy){
     out << (this->s);
 }
 
-string Variable::to_string(){
+string VarExpr::to_string(){
     stringstream out("");
     pretty_print(out);
     return out.str();
@@ -268,14 +262,14 @@ string Variable::to_string(){
 
 //Class _Let--------------------------------------------------------------------------
 
-_let::_let(Variable* variable, expr* rhs, expr* body){
+letExpr::letExpr(VarExpr* variable, expr* rhs, expr* body){
     this->variable = variable;
     this->rhs = rhs;
     this->body = body;
 }
 
-bool _let::equals(expr *e){
-    _let *t = dynamic_cast<_let*>(e);
+bool letExpr::equals(expr *e){
+    letExpr *t = dynamic_cast<letExpr*>(e);
     if (t == NULL)
         return false;
     else
@@ -284,33 +278,26 @@ bool _let::equals(expr *e){
         && this->body->equals(t->body));
 }
 
-Val* _let::interp(){
+Val* letExpr::interp(){
     Val *newRhs = rhs -> interp();
-    return ((this->body)
-            -> subst ((this->variable)->to_string(), newRhs->to_expr()))
+    return (this->body)
+            -> subst ((this->variable)->to_string(), newRhs)
             -> interp();
 }
 
-bool _let::has_variable(){
+bool letExpr::has_variable(){
     return this->rhs->has_variable()||this->body->has_variable();
 }
 
-expr* _let::subst(string s1, expr *e){
+expr* letExpr::subst(string s1, Val *new_val){
 
-    if (s1 == this->variable->to_string()){
-        return new _let(this->variable,
-                        this->rhs->subst(s1,e),
-                        this->body);
-    }
-
-    else{
-        return new _let(this->variable,
-                        this->rhs->subst(s1, e),
-                        this->body->subst(s1, e));
-    }
+    return new letExpr(this->variable,
+                           this->rhs->subst(s1, new_val),
+                           this->body->subst(s1, new_val));
 }
-void _let::print(ostream &out){
-    out << "(_let ";
+
+void letExpr::print(ostream &out){
+    out << "(letExpr ";
     this->variable->print(out);
     out << "=";
     this->rhs->print(out);
@@ -318,22 +305,23 @@ void _let::print(ostream &out){
     this->body->print(out);
     out << ")";
 }
-void _let::pretty_print(ostream &out){
+
+void letExpr::pretty_print(ostream &out){
     pretty_print_at(out,prec_none,0,0,0);
 }
 
-string _let::to_string(){
+string letExpr::to_string(){
     std::stringstream ss;
     this -> print(ss);
     return ss.str();
 }
 
-void _let::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy){
+void letExpr::pretty_print_at(ostream &out, precedence_t p, bool isLeftInside, bool isNested, int occupy){
 
     long begin_ = out.tellp();
 
     if ((p > 1 && isLeftInside) || isNested){
-        out << "(_let ";
+        out << "(letExpr ";
         this->variable->pretty_print_at(out, p, false, false, occupy+1);
         out << " = ";
         long end_p1 = out.tellp();
@@ -349,7 +337,7 @@ void _let::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool is
         this->body->pretty_print_at(out, p, false, false, occupy+5);
         out << ")";
     }else{
-        out << "_let ";
+        out << "letExpr ";
         this->variable->pretty_print_at(out, p, false, false, occupy);
         out << " = ";
         long end_p2 = out.tellp();
@@ -364,5 +352,134 @@ void _let::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool is
         this->body->pretty_print_at(out, p, false, false, occupy+4);
     }
 }
+
+//boolean
+BoolExpr::BoolExpr(bool var){
+    this->var = var;
+}
+
+bool BoolExpr::equals(expr* expr){
+    BoolExpr* other_bool_expr = dynamic_cast<BoolExpr*>(expr);
+    if (other_bool_expr == nullptr)
+        return false;
+    else
+        return var == other_bool_expr->var;
+}
+
+bool BoolExpr::has_variable(){
+    return false;
+}
+
+expr* BoolExpr::subst(std::string input, Val* new_val){
+    BoolExpr* res = new BoolExpr(this->var);
+    return res;
+}
+
+std::string BoolExpr::to_string(){
+    if (var == true)
+        return "_true";
+    else
+        return "_false";
+}
+
+Val* BoolExpr::interp(){
+    return NULL;
+}
+
+void BoolExpr::print(ostream &out){
+
+}
+
+//EqualExpr
+EqualExpr::EqualExpr(expr* lhs, expr* rhs){
+    this->lhs = lhs;
+    this->rhs = rhs;
+}
+
+bool EqualExpr::equals(expr* other_expr){
+    EqualExpr* t = dynamic_cast<EqualExpr*>(other_expr);
+    if (t == nullptr)
+        return false;
+    else
+        return (lhs->equals(t->lhs)
+                && rhs->equals(t->rhs));
+}
+
+bool EqualExpr::has_variable(){
+    return (lhs->has_variable()
+            || rhs->has_variable());
+}
+
+expr* EqualExpr::subst(string var, Val* new_val){
+    return new EqualExpr( lhs->subst(var, new_val),
+                          rhs->subst(var, new_val));
+}
+
+std::string EqualExpr::to_string(){
+    return lhs->to_string() + " == " + rhs->to_string();
+}
+
+Val* EqualExpr::interp(){
+    return NULL;
+}
+
+void EqualExpr::print(ostream &out){
+
+}
+
+//IfExpr
+IfExpr::IfExpr(expr* test_part, expr* then_part, expr* else_part){
+    this->test_part = test_part;
+    this->then_part = then_part;
+    this->else_part = else_part;
+}
+
+bool IfExpr::equals(expr* other_expr){
+    IfExpr* other_if_expr = dynamic_cast<IfExpr*>(other_expr);
+    if (other_if_expr == nullptr)
+        return false;
+    else
+        return (test_part->equals(other_if_expr->test_part)
+                && then_part->equals(other_if_expr->then_part)
+                && else_part->equals(other_if_expr->else_part));
+}
+
+bool IfExpr::has_variable(){
+    return (test_part->has_variable()
+            || then_part->has_variable()
+            || else_part->has_variable());
+}
+
+expr* IfExpr::subst(std::string var, Val* new_val){
+
+    return new IfExpr(test_part->subst(var, new_val),
+                       then_part->subst(var, new_val),
+                       else_part->subst(var, new_val));
+}
+
+std::string IfExpr::to_string(){
+    return "(_if " + test_part->to_string() +
+           " _then " + then_part->to_string() +
+           " _else " + else_part->to_string() + ")";
+}
+
+Val* IfExpr::interp(){
+    return NULL;
+}
+
+void IfExpr::print(ostream &out){
+
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
