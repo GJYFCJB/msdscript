@@ -61,6 +61,7 @@ expr *parse_var(std::istream &in) {
 }
 
 expr *parse_let(std::istream &in) {
+
     skip_whitespace(in);
     string s = "";
     expr *var = parse_var(in);
@@ -90,6 +91,18 @@ std::string parse_keyword(std::istream &in) {
 
 
 expr *parse_expr(std::istream &in) {
+//    expr *e = parse_comparg(in);
+//    char c = peek_after_spaces(in);
+//
+//    if (c == '=') {
+//        c = in.get();
+//        c = in.get();
+//        if (c == '=') {
+//            expr *rhs = parse_expr(in);
+//            e = new EqualExpr (e, rhs);
+//        }
+//    }
+//        return e;
     expr *e;
     e = parse_addend(in);
     skip_whitespace(in);
@@ -102,7 +115,28 @@ expr *parse_expr(std::istream &in) {
         return e;
 }
 
+//expr *parse_comparg(std::istream &in) {
+//    expr *e = parse_addend(in);
+//
+//    char c = peek_after_spaces(in);
+//    if (c == '+') {
+//        in >> c;
+//        expr * rhs = parse_comparg(in);
+//        e = new (AddExpr)(e, rhs);
+//    }
+//    return e;
+//}
+
 expr *parse_addend(std::istream &in) {
+//    expr *e;
+//    e = parse_multicand(in);
+//    char c = peek_after_spaces(in);
+//    if (c == '*') {
+//        consume(in, '*');
+//        expr *rhs = parse_addend(in);
+//        e =  new MultExpr(e, rhs);
+//    }
+//    return e;
     expr *e;
     e = parse_multicand(in);
     skip_whitespace(in);
@@ -116,8 +150,8 @@ expr *parse_addend(std::istream &in) {
 }
 
 expr *parse_multicand(std::istream &in) {
-    skip_whitespace(in);
-    char c = in.peek();
+
+    char c = peek_after_spaces(in);
 
     if ((c == '-') || isdigit(c))
         return parse_num(in);

@@ -23,7 +23,7 @@ typedef enum {
 class Val;
 class expr{
 public:
-    
+
     /*The value of a number is the number
 The value of an addition expression is the sum of the subexpression values
 The value of a multiplication expression is the product of the subexpression values*/
@@ -31,7 +31,7 @@ The value of a multiplication expression is the product of the subexpression val
     virtual bool equals(expr *e) = 0;
     virtual bool has_variable() = 0;
     virtual expr* subst(string s1, Val *val) = 0;
-    virtual void print(ostream &out);
+    virtual void print(ostream &out) = 0;
     virtual void pretty_print(ostream &out);
     virtual void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
     virtual string to_string();
@@ -124,7 +124,6 @@ public:
     BoolExpr(bool var);
     bool equals(expr* expr);
     bool has_variable();
-
     expr* subst(string s1, Val *val);
     virtual std::string to_string();
     /*The value of a number is the number

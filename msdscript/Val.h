@@ -17,6 +17,8 @@ public:
     virtual Val* multWith (Val* input) = 0;
     virtual Val* addTo (Val* input) = 0;
     virtual bool equals(Val* input) = 0;
+    virtual string to_string() = 0;
+    virtual bool is_true() = 0;
 };
 
 class NumVal : public Val{
@@ -27,7 +29,8 @@ public:
     virtual Val* addTo (Val* input);
     virtual Val* multWith (Val* input);
     virtual bool equals(Val* input) ;
-
+    string to_string();
+    bool is_true();
 };
 
 class BoolVal : public Val {

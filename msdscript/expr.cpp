@@ -31,16 +31,13 @@ void expr::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool is
 
 }
 
-//
-//bool expr::equals(expr *e){
-//    return false;
-//}
+
 
 //override pure virtual method of interface
 //Class NumExpr--------------------------------------------------------------------------
 NumExpr::NumExpr(int val_){
     this->rep = val_;
-    Val* val = new NumVal(val_);
+    this->val = new NumVal(val_);
 }
 
 bool NumExpr::equals(expr *e) {
@@ -93,8 +90,7 @@ bool AddExpr::equals(expr *e) {
 }
 
 Val* AddExpr::interp() {
-
-        return lhs->interp()->addTo(rhs->interp());
+    return lhs->interp()->addTo(rhs->interp());
 }
 
 bool AddExpr::has_variable(){
@@ -159,9 +155,7 @@ bool MultExpr::equals(expr *e) {
 }
 
 Val* MultExpr::interp() {
-
-        return (this->rhs->interp()->multWith(this->lhs->interp()));
-
+    return (this->lhs->interp()->multWith(this->rhs->interp()));
 }
 
 bool MultExpr::has_variable(){
@@ -229,7 +223,6 @@ Val* VarExpr::interp(){
     throw std::runtime_error("VarExpr has no value");
 }
 
-
 bool VarExpr::has_variable(){
     return true;
 }
@@ -280,8 +273,8 @@ bool letExpr::equals(expr *e){
 
 Val* letExpr::interp(){
     Val *newRhs = rhs -> interp();
-    return (this->body)
-            -> subst ((this->variable)->to_string(), newRhs)
+    return body
+            -> subst ((variable)->to_string(), newRhs)
             -> interp();
 }
 
@@ -290,7 +283,11 @@ bool letExpr::has_variable(){
 }
 
 expr* letExpr::subst(string s1, Val *new_val){
-
+    if (s1 == this->variable->to_string()){
+        return new letExpr(this->variable,
+                        this->rhs->subst(s1,new_val),
+                        this->body);
+    }
     return new letExpr(this->variable,
                            this->rhs->subst(s1, new_val),
                            this->body->subst(s1, new_val));
@@ -383,7 +380,7 @@ std::string BoolExpr::to_string(){
 }
 
 Val* BoolExpr::interp(){
-    return NULL;
+    return new(BoolVal)(var);
 }
 
 void BoolExpr::print(ostream &out){
@@ -420,7 +417,9 @@ std::string EqualExpr::to_string(){
 }
 
 Val* EqualExpr::interp(){
-    return NULL;
+    Val* _lhs = lhs->interp();
+    Val* _rhs = rhs->interp();
+    return new(BoolVal)(_lhs->equals(_rhs));
 }
 
 void EqualExpr::print(ostream &out){
@@ -464,7 +463,10 @@ std::string IfExpr::to_string(){
 }
 
 Val* IfExpr::interp(){
-    return NULL;
+    if(test_part->interp()->is_true())
+        return then_part->interp();
+    else
+        return else_part->interp();
 }
 
 void IfExpr::print(ostream &out){

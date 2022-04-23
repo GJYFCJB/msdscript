@@ -39,6 +39,14 @@ NumVal::NumVal(int input) {
     this->val = input;
 }
 
+string NumVal::to_string(){
+    return std::to_string(val);
+}
+
+bool NumVal::is_true(){
+    throw std::runtime_error("numbers is_true makes no sense");
+}
+
 BoolVal::BoolVal(bool input){
     this->bool_ = input;
 }
