@@ -166,6 +166,34 @@ public:
 
 };
 
+class FunExpr : public expr {
+public:
+    std::string formal_arg;
+    expr* body;
+
+    FunExpr(std::string arg, expr* body);
+    bool equals(expr* other_expr);
+    bool has_variable();
+    Val* interp();
+    expr* subst(std::string var, Val* val);
+    std::string to_string();
+    void print(ostream &out);
+};
+
+class CallExpr : public expr {
+public:
+    expr* to_be_called;
+    expr* actual_arg;
+
+    CallExpr(expr* to_be, expr* actual);
+    bool equals(expr* other_expr);
+    bool has_variable();
+    Val* interp();
+    expr* subst(std::string var, Val* val);
+    std::string to_string();
+    void print(ostream &out);
+};
+
 
 
 

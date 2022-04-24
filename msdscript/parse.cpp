@@ -27,6 +27,17 @@ char peek_after_spaces(std::istream &in) {
     return c;
 }
 
+std::string parse_alphabetic(std::istream &in, std::string prefix) {
+    std::string name = prefix;
+    while (1) {
+        char c = in.peek();
+        if (!isalpha(c))
+            break;
+        name += in.get();
+    }
+    return name;
+}
+
 expr *parse_num(std::istream &in) {
     int n = 0;
     bool negative = false;
@@ -103,29 +114,30 @@ expr *parse_expr(std::istream &in) {
 //        }
 //    }
 //        return e;
-    expr *e;
-    e = parse_addend(in);
-    skip_whitespace(in);
-    int c = in.peek();
-    if (c == '+') {
-        consume(in, '+');
-        expr *rhs = parse_expr(in);
-        return new AddExpr(e, rhs);
-    } else
-        return e;
+    expr *e = parse_comparg(in);
+    char c = peek_after_spaces(in);
+    if (c == '=') {
+        c = in.get();
+        c = in.get();
+        if (c == '=') {
+            expr *res = parse_expr(in);
+            e = new(EqualExpr)(e, res);
+        }
+    }
+    return e;
 }
 
-//expr *parse_comparg(std::istream &in) {
-//    expr *e = parse_addend(in);
-//
-//    char c = peek_after_spaces(in);
-//    if (c == '+') {
-//        in >> c;
-//        expr * rhs = parse_comparg(in);
-//        e = new (AddExpr)(e, rhs);
-//    }
-//    return e;
-//}
+expr *parse_comparg(std::istream &in) {
+    expr *e = parse_addend(in);
+
+    char c = peek_after_spaces(in);
+    if (c == '+') {
+        in >> c;
+        expr *rhs = parse_comparg(in);
+        e = new (AddExpr)(e, rhs);
+    }
+    return e;
+}
 
 expr *parse_addend(std::istream &in) {
 //    expr *e;
@@ -150,50 +162,15 @@ expr *parse_addend(std::istream &in) {
 }
 
 expr *parse_multicand(std::istream &in) {
+    expr *e = parse_inner(in);
 
-    char c = peek_after_spaces(in);
-
-    if ((c == '-') || isdigit(c))
-        return parse_num(in);
-
-    else if (c == '(') {
+    while (in.peek() == '(') {
         consume(in, '(');
-        expr *e = parse_expr(in);
-        skip_whitespace(in);
-        c = in.get();
-        if (c != ')')
-            throw std::runtime_error("missing close parenthesis");
-        return e;
-    } else if (isalpha(c))
-        return parse_var(in);
-
-    else if (c == '_') {
-        string keyword = parse_keyword(in);
-        if (keyword == "letExpr") return parse_let(in);
-        else if (keyword == "_in") {
-            skip_whitespace(in);
-            return parse_expr(in);
-        } else {
-            throw std::runtime_error((std::string) "unexpected keyword " + keyword);
-        }
-    } else {
-        consume(in, c);
-        throw std::runtime_error("invalid input");
+        expr *actual_arg = parse_expr(in); // try parse inner
+        consume(in, '(');
+        e = new(CallExpr)(e, actual_arg);
     }
-}
-
-expr *parse(std::istream &in) {
-    expr *e = parse_expr(in);
-    skip_whitespace(in);
-    char c = in.get();
-    if (!in.eof())
-        throw std::runtime_error((std::string) "end of file at " + c);
     return e;
-}
-
-expr *parse_str(std::string s) {
-    std::istringstream in(s);
-    return parse(in);
 }
 
 expr *parse_inner(std::istream &in) {
@@ -245,6 +222,37 @@ expr *parse_if(std::istream &in) {
         throw std::runtime_error("expected keyword _else");
     expr *else_case = parse_expr(in);
     return new(IfExpr)(test_case, then_case, else_case);
+}
+
+expr *parse_fun(std::istream &in) {
+    char c = peek_after_spaces(in);
+    if (c != '(') {
+        throw std::runtime_error("expected an open parenthesis");
+    }
+    c = in.get();
+    std::string variable = parse_alphabetic(in, "");
+    c = peek_after_spaces(in);
+    if (c != ')') {
+        throw std::runtime_error("expected a close parenthesis");
+    }
+    c = in.get();
+    expr* e = parse_expr(in);
+    return new(FunExpr)(variable, e);
+}
+
+
+expr *parse(std::istream &in) {
+    expr *e = parse_expr(in);
+    skip_whitespace(in);
+    char c = in.get();
+    if (!in.eof())
+        throw std::runtime_error((std::string) "end of file at " + c);
+    return e;
+}
+
+expr *parse_str(std::string s) {
+    std::istringstream in(s);
+    return parse(in);
 }
 
 

@@ -489,7 +489,7 @@ TEST_CASE("Parse"){
     CHECK( parse_str(" 1 + (2 * 3)")
                    ->equals(new AddExpr(new NumExpr(1), new MultExpr(new NumExpr(2), new NumExpr(3)))));
 
-//    //parse let
+    //parse let
 //    expr* l0 = new letExpr(new VarExpr("x"),
 //                           new NumExpr(4),
 //                           new AddExpr(new VarExpr("x"), new NumExpr(1)));
@@ -669,5 +669,73 @@ TEST_CASE("IfExpr"){
                == "(_if _true _then 3 _else 2)" );
     }
 
+}
 
+TEST_CASE("FunExpr"){
+
+    SECTION("Equals"){
+        CHECK( (new(FunExpr)("z", new(VarExpr)("x")))
+                       ->equals(new(FunExpr)("z", new(VarExpr)("x"))));
+        CHECK( (new(FunExpr)("z", new(NumExpr)(3)))
+                       ->equals(new(FunExpr)("z", new(NumExpr)(3))));
+        CHECK( ! (new(FunExpr)("x", new(NumExpr)(4)))
+                ->equals(new(FunExpr)("y", new(NumExpr)(4))));
+        CHECK( ! (new(FunExpr)("x", new(NumExpr)(31)))
+                ->equals(new(FunExpr)("x", new(NumExpr)(41))));
+        CHECK( ! (new(FunExpr)("x", new(NumExpr)(31)))
+                ->equals(NULL));
+    }
+
+    SECTION("interp"){
+        CHECK( (new(FunExpr)("x", new(NumExpr)(41)))->interp()
+                       ->equals(new(FunVal)("x", new(NumExpr)(41))));
+        CHECK( (new(FunExpr)("x", new(AddExpr)(new(NumExpr)(41), new(VarExpr)("x"))))->interp()
+                       ->equals(new(FunVal)("x", new(AddExpr)(new(NumExpr)(41), new(VarExpr)("x")))));
+    }
+
+    SECTION("subst"){
+
+    }
+
+    SECTION("has_variable"){
+        CHECK( (new(FunExpr)("x", new(NumExpr)(14)))->has_variable()
+               == true);
+    }
+
+    SECTION("to_string"){
+        CHECK( (new(FunExpr)("x", new(NumExpr)(15)))->to_string()
+               == "(_fun (x) 15)");
+    }
+}
+
+TEST_CASE("CallExpr"){
+
+    SECTION("Equals"){
+        CHECK( (new(CallExpr)(new(NumExpr)(13), new(NumExpr)(13)))
+                       ->equals(new(CallExpr)(new(NumExpr)(13), new(NumExpr)(13))));
+        CHECK( ! (new(CallExpr)(new(NumExpr)(31), new(NumExpr)(31)))
+                ->equals(new(CallExpr)(new(NumExpr)(41), new(NumExpr)(31))));
+        CHECK( ! (new(CallExpr)(new(NumExpr)(3), new(NumExpr)(3)))
+                ->equals(new(CallExpr)(new(NumExpr)(3), new(VarExpr)("x"))));
+        CHECK( ! (new(CallExpr)(new(NumExpr)(3), new(NumExpr)(3)))
+                ->equals(NULL));
+    }
+
+    SECTION("interp"){
+
+    }
+
+    SECTION("subst"){
+
+    }
+
+    SECTION("has_variable"){
+        CHECK( (new(CallExpr)(new(NumExpr)(4), new(NumExpr)(4)))->has_variable()
+               == true);
+    }
+
+    SECTION("to_string"){
+        CHECK( (new(CallExpr)(new(VarExpr)("x"), new(NumExpr)(3)))->to_string()
+               == ", (x(3))");
+    }
 }

@@ -473,6 +473,78 @@ void IfExpr::print(ostream &out){
 
 }
 
+//FunExpr
+FunExpr::FunExpr(std::string arg, expr* body){
+    this->formal_arg = arg;
+    this->body = body;
+}
+
+bool FunExpr::equals(expr* other_expr){
+    FunExpr* other_fun_expr = dynamic_cast<FunExpr*>(other_expr);
+    if (other_fun_expr == nullptr)
+        return false;
+    else
+        return (formal_arg == other_fun_expr->formal_arg
+                && body->equals(other_fun_expr->body));
+}
+
+bool FunExpr:: has_variable(){
+    return true;
+}
+
+Val* FunExpr::interp(){
+    return new FunVal(formal_arg, body);
+}
+
+expr* FunExpr::subst(std::string var, Val* val){
+    if(var == formal_arg){
+        return new FunExpr(formal_arg, body);
+    }
+    return new FunExpr(formal_arg, body->subst(var, val));
+}
+
+std::string FunExpr::to_string(){
+    return "(_fun (" + formal_arg + ") " + body->to_string() + ")";
+}
+
+void FunExpr::print(ostream &out){
+
+}
+
+//CallExpr
+CallExpr::CallExpr(expr* to_be, expr* actual){
+    this->to_be_called = to_be;
+    this->actual_arg = actual;
+}
+
+bool CallExpr::equals(expr* other_expr){
+    CallExpr* other_call_expr = dynamic_cast<CallExpr*>(other_expr);
+    if (other_call_expr == nullptr)
+        return false;
+    else
+        return(to_be_called->equals(other_call_expr->to_be_called)
+               && actual_arg->equals(other_call_expr->actual_arg));
+}
+
+bool CallExpr::has_variable(){
+    return true;
+}
+
+Val* CallExpr::interp(){
+    return to_be_called->interp()->call(actual_arg->interp());
+}
+
+expr* CallExpr::subst(std::string var, Val* val){
+    return new CallExpr(to_be_called->subst(var, val), actual_arg->subst(var, val));
+}
+
+std::string CallExpr::to_string(){
+    return ", (" + to_be_called->to_string() + "(" + actual_arg->to_string() + "))";
+}
+
+void CallExpr::print(ostream &out){
+
+}
 
 
 

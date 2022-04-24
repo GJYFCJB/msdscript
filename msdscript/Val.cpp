@@ -47,6 +47,11 @@ bool NumVal::is_true(){
     throw std::runtime_error("numbers is_true makes no sense");
 }
 
+Val* NumVal::call(Val* actual_arg){
+    throw std::runtime_error("cannot call on a number");
+}
+
+//boolval
 BoolVal::BoolVal(bool input){
     this->bool_ = input;
 }
@@ -78,6 +83,48 @@ expr* BoolVal::to_expr(){
 string BoolVal::to_string() {
     if(bool_) return "true";
     else return "false";
+}
+
+Val* BoolVal::call(Val* actual_arg){
+    throw std::runtime_error("cannot call on a boolean");
+}
+
+//FunVal
+FunVal::FunVal(std::string arg, expr* body){
+    this->formal_arg = arg;
+    this->body = body;
+}
+
+bool FunVal::equals(Val* other_val){
+    FunVal* other_fun_val = dynamic_cast<FunVal*>(other_val);
+    if (other_fun_val == nullptr)
+        return false;
+    else
+        return (formal_arg == other_fun_val->formal_arg && body->equals(other_fun_val->body));
+}
+
+bool FunVal::is_true(){
+    throw std::runtime_error("functions' true/false makes no sense");
+}
+
+Val* FunVal::addTo(Val* other_val){
+    throw std::runtime_error("no adding functions");
+}
+
+Val* FunVal::multWith(Val* other_val){
+    throw std::runtime_error("no multiplying functions");
+}
+
+Val* FunVal::call(Val* actual_arg){
+    return body->interp();
+}
+
+expr* FunVal::to_expr(){
+    return new(FunExpr)(this->formal_arg, this->body);
+}
+
+std::string FunVal::to_string(){
+    return "_fun (" + this->formal_arg + ") " + this->body->to_string();
 }
 
 
