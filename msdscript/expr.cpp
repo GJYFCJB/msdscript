@@ -31,16 +31,13 @@ void expr::pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool is
 
 }
 
-//
-//bool expr::equals(expr *e){
-//    return false;
-//}
+
 
 //override pure virtual method of interface
 //Class NumExpr--------------------------------------------------------------------------
 NumExpr::NumExpr(int val_){
     this->rep = val_;
-    Val* val = new NumVal(val_);
+    this->val = new NumVal(val_);
 }
 
 bool NumExpr::equals(expr *e) {
@@ -93,8 +90,7 @@ bool AddExpr::equals(expr *e) {
 }
 
 Val* AddExpr::interp() {
-
-        return lhs->interp()->addTo(rhs->interp());
+    return lhs->interp()->addTo(rhs->interp());
 }
 
 bool AddExpr::has_variable(){
@@ -159,9 +155,7 @@ bool MultExpr::equals(expr *e) {
 }
 
 Val* MultExpr::interp() {
-
-        return (this->rhs->interp()->multWith(this->lhs->interp()));
-
+    return (this->lhs->interp()->multWith(this->rhs->interp()));
 }
 
 bool MultExpr::has_variable(){
@@ -229,7 +223,6 @@ Val* VarExpr::interp(){
     throw std::runtime_error("VarExpr has no value");
 }
 
-
 bool VarExpr::has_variable(){
     return true;
 }
@@ -280,8 +273,8 @@ bool letExpr::equals(expr *e){
 
 Val* letExpr::interp(){
     Val *newRhs = rhs -> interp();
-    return (this->body)
-            -> subst ((this->variable)->to_string(), newRhs)
+    return body
+            -> subst ((variable)->to_string(), newRhs)
             -> interp();
 }
 
@@ -290,7 +283,11 @@ bool letExpr::has_variable(){
 }
 
 expr* letExpr::subst(string s1, Val *new_val){
-
+    if (s1 == this->variable->to_string()){
+        return new letExpr(this->variable,
+                        this->rhs->subst(s1,new_val),
+                        this->body);
+    }
     return new letExpr(this->variable,
                            this->rhs->subst(s1, new_val),
                            this->body->subst(s1, new_val));
@@ -383,7 +380,7 @@ std::string BoolExpr::to_string(){
 }
 
 Val* BoolExpr::interp(){
-    return NULL;
+    return new(BoolVal)(var);
 }
 
 void BoolExpr::print(ostream &out){
@@ -420,7 +417,9 @@ std::string EqualExpr::to_string(){
 }
 
 Val* EqualExpr::interp(){
-    return NULL;
+    Val* _lhs = lhs->interp();
+    Val* _rhs = rhs->interp();
+    return new(BoolVal)(_lhs->equals(_rhs));
 }
 
 void EqualExpr::print(ostream &out){
@@ -464,13 +463,88 @@ std::string IfExpr::to_string(){
 }
 
 Val* IfExpr::interp(){
-    return NULL;
+    if(test_part->interp()->is_true())
+        return then_part->interp();
+    else
+        return else_part->interp();
 }
 
 void IfExpr::print(ostream &out){
 
 }
 
+//FunExpr
+FunExpr::FunExpr(std::string arg, expr* body){
+    this->formal_arg = arg;
+    this->body = body;
+}
+
+bool FunExpr::equals(expr* other_expr){
+    FunExpr* other_fun_expr = dynamic_cast<FunExpr*>(other_expr);
+    if (other_fun_expr == nullptr)
+        return false;
+    else
+        return (formal_arg == other_fun_expr->formal_arg
+                && body->equals(other_fun_expr->body));
+}
+
+bool FunExpr:: has_variable(){
+    return true;
+}
+
+Val* FunExpr::interp(){
+    return new FunVal(formal_arg, body);
+}
+
+expr* FunExpr::subst(std::string var, Val* val){
+    if(var == formal_arg){
+        return new FunExpr(formal_arg, body);
+    }
+    return new FunExpr(formal_arg, body->subst(var, val));
+}
+
+std::string FunExpr::to_string(){
+    return "(_fun (" + formal_arg + ") " + body->to_string() + ")";
+}
+
+void FunExpr::print(ostream &out){
+
+}
+
+//CallExpr
+CallExpr::CallExpr(expr* to_be, expr* actual){
+    this->to_be_called = to_be;
+    this->actual_arg = actual;
+}
+
+bool CallExpr::equals(expr* other_expr){
+    CallExpr* other_call_expr = dynamic_cast<CallExpr*>(other_expr);
+    if (other_call_expr == nullptr)
+        return false;
+    else
+        return(to_be_called->equals(other_call_expr->to_be_called)
+               && actual_arg->equals(other_call_expr->actual_arg));
+}
+
+bool CallExpr::has_variable(){
+    return true;
+}
+
+Val* CallExpr::interp(){
+    return to_be_called->interp()->call(actual_arg->interp());
+}
+
+expr* CallExpr::subst(std::string var, Val* val){
+    return new CallExpr(to_be_called->subst(var, val), actual_arg->subst(var, val));
+}
+
+std::string CallExpr::to_string(){
+    return ", (" + to_be_called->to_string() + "(" + actual_arg->to_string() + "))";
+}
+
+void CallExpr::print(ostream &out){
+
+}
 
 
 

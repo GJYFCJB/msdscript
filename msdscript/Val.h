@@ -17,6 +17,9 @@ public:
     virtual Val* multWith (Val* input) = 0;
     virtual Val* addTo (Val* input) = 0;
     virtual bool equals(Val* input) = 0;
+    virtual string to_string() = 0;
+    virtual bool is_true() = 0;
+    virtual Val* call(Val* actual_arg) = 0;
 };
 
 class NumVal : public Val{
@@ -27,7 +30,9 @@ public:
     virtual Val* addTo (Val* input);
     virtual Val* multWith (Val* input);
     virtual bool equals(Val* input) ;
-
+    string to_string();
+    bool is_true();
+    Val* call(Val* actual_arg);
 };
 
 class BoolVal : public Val {
@@ -42,6 +47,23 @@ public:
     Val* multWith(Val* other_val);
     expr* to_expr();
     string to_string();
+    Val* call(Val* actual_arg);
+};
+
+class FunVal : public Val {
+public:
+    std::string formal_arg;
+    expr* body;
+
+    FunVal(std::string arg, expr* body);
+    bool equals(Val* val);
+    bool is_true();
+
+    Val* addTo(Val* other_val);
+    Val* multWith(Val* other_val);
+    Val* call(Val* actual_arg);
+    expr* to_expr();
+    std::string to_string();
 };
 
 
