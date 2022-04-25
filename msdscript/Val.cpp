@@ -4,6 +4,7 @@
 
 #include "Val.h"
 #include "expr.hpp"
+#include "env.h"
 
 
 PTR(Val) NumVal::addTo (PTR(Val) input){
@@ -90,9 +91,10 @@ PTR(Val) BoolVal::call(PTR(Val) actual_arg){
 }
 
 //FunVal
-FunVal::FunVal(std::string arg, PTR(expr) body){
+FunVal::FunVal(std::string arg, PTR(expr) body, PTR(Env) env){
     this->formal_arg = arg;
     this->body = body;
+    this->env = env;
 }
 
 bool FunVal::equals(PTR(Val) other_val){
@@ -116,7 +118,7 @@ PTR(Val) FunVal::multWith(PTR(Val) other_val){
 }
 
 PTR(Val) FunVal::call(PTR(Val) actual_arg){
-    return body->interp();
+    return body->interp(NEW(ExtendedEnv)(formal_arg, actual_arg, env));
 }
 
 PTR(expr) FunVal::to_expr(){

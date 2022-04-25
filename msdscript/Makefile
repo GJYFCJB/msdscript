@@ -1,5 +1,5 @@
-INCS = main.hpp expr.hpp parse.hpp exec.h val.h pointer.h
-OBJS = main.o expr.o parse.o Val.o
+INCS = main.hpp expr.hpp parse.hpp exec.h val.h pointer.h env.h
+OBJS = main.o expr.o parse.o Val.o env.o
 INCS1 = exec.h
 OBJS1 = exec.o run_msdscript.o
 msdscript: $(OBJS)
@@ -19,6 +19,9 @@ Val.o: Val.cpp $(INCS)
 
 parse.o: parse.cpp $(INCS)
 		c++ --std=c++14 -O2 -c parse.cpp
+
+env.o: env.cpp $(INCS)
+		c++ --std=c++14 -O2 -c env.cpp
 
 exec.o: exec.cpp $(INCS1)
 		c++ --std=c++14 -O2 -c exec.cpp

@@ -5,6 +5,7 @@
 
 #include "expr.hpp"
 #include "Val.h"
+#include "env.h"
 #include<iostream>
 #include<stdexcept>
 #include <sstream>
@@ -48,7 +49,7 @@ bool NumExpr::equals(PTR(expr)e) {
         return (this->rep == t->rep);
 }
 
-PTR(Val) NumExpr::interp(){
+PTR(Val) NumExpr::interp(PTR(Env) env){
     return val;
 }
 
@@ -89,8 +90,8 @@ bool AddExpr::equals(PTR(expr)e) {
         return (this->lhs->equals(t->lhs)  && this->rhs->equals(t -> rhs));
 }
 
-PTR(Val) AddExpr::interp() {
-    return lhs->interp()->addTo(rhs->interp());
+PTR(Val) AddExpr::interp(PTR(Env) env) {
+    return lhs->interp(env)->addTo(rhs->interp(env));
 }
 
 bool AddExpr::has_variable(){
@@ -154,8 +155,8 @@ bool MultExpr::equals(PTR(expr)e) {
         return (this->lhs->equals(t->lhs)  && this->rhs->equals(t -> rhs) );
 }
 
-PTR(Val) MultExpr::interp() {
-    return (this->lhs->interp()->multWith(this->rhs->interp()));
+PTR(Val) MultExpr::interp(PTR(Env) env) {
+    return (this->lhs->interp(env)->multWith(this->rhs->interp(env)));
 }
 
 bool MultExpr::has_variable(){
@@ -219,8 +220,8 @@ bool VarExpr::equals(PTR(expr)e) {
         return (this->s == t->s);
 }
 
-PTR(Val) VarExpr::interp(){
-    throw std::runtime_error("VarExpr has no value");
+PTR(Val) VarExpr::interp(PTR(Env) env){
+    return env->lookup(s);
 }
 
 bool VarExpr::has_variable(){
@@ -271,11 +272,10 @@ bool letExpr::equals(PTR(expr)e){
         && this->body->equals(t->body));
 }
 
-PTR(Val) letExpr::interp(){
-    PTR(Val)NEWRhs = rhs -> interp();
-    return body
-            -> subst ((variable), NEWRhs)
-            -> interp();
+PTR(Val) letExpr::interp(PTR(Env) env){
+    PTR(Val) rhs_val = rhs->interp(env);
+    PTR(Env) new_env = NEW(ExtendedEnv)(variable, rhs_val, env);
+    return body->interp(new_env);
 }
 
 bool letExpr::has_variable(){
@@ -379,7 +379,7 @@ std::string BoolExpr::to_string(){
         return "_false";
 }
 
-PTR(Val) BoolExpr::interp(){
+PTR(Val) BoolExpr::interp(PTR(Env) env){
     return NEW(BoolVal)(var);
 }
 
@@ -416,9 +416,9 @@ std::string EqualExpr::to_string(){
     return lhs->to_string() + " == " + rhs->to_string();
 }
 
-PTR(Val) EqualExpr::interp(){
-    PTR(Val) _lhs = lhs->interp();
-    PTR(Val) _rhs = rhs->interp();
+PTR(Val) EqualExpr::interp(PTR(Env) env){
+    PTR(Val) _lhs = lhs->interp(env);
+    PTR(Val) _rhs = rhs->interp(env);
     return NEW(BoolVal)(_lhs->equals(_rhs));
 }
 
@@ -462,11 +462,11 @@ std::string IfExpr::to_string(){
            " _else " + else_part->to_string() + ")";
 }
 
-PTR(Val) IfExpr::interp(){
-    if(test_part->interp()->is_true())
-        return then_part->interp();
+PTR(Val) IfExpr::interp(PTR(Env) env){
+    if(test_part->interp(env)->is_true())
+        return then_part->interp(env);
     else
-        return else_part->interp();
+        return else_part->interp(env);
 }
 
 void IfExpr::print(ostream &out){
@@ -492,8 +492,8 @@ bool FunExpr:: has_variable(){
     return true;
 }
 
-PTR(Val) FunExpr::interp(){
-    return NEW(FunVal)(formal_arg, body);
+PTR(Val) FunExpr::interp(PTR(Env) env){
+    return NEW(FunVal)(formal_arg, body,env);
 }
 
 PTR(expr) FunExpr::subst(std::string var, PTR(Val) val){
@@ -530,8 +530,8 @@ bool CallExpr::has_variable(){
     return true;
 }
 
-PTR(Val) CallExpr::interp(){
-    return to_be_called->interp()->call(actual_arg->interp());
+PTR(Val) CallExpr::interp(PTR(Env) env){
+    return to_be_called->interp(env)->call(actual_arg->interp(env));
 }
 
 PTR(expr) CallExpr::subst(std::string var, PTR(Val) val){
