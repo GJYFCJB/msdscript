@@ -1,4 +1,4 @@
-INCS = main.hpp expr.hpp parse.hpp exec.h val.h
+INCS = main.hpp expr.hpp parse.hpp exec.h val.h pointer.h
 OBJS = main.o expr.o parse.o Val.o
 INCS1 = exec.h
 OBJS1 = exec.o run_msdscript.o

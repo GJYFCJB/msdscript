@@ -27,6 +27,7 @@ char peek_after_spaces(std::istream &in) {
     return c;
 }
 
+//parse expr element
 std::string parse_alphabetic(std::istream &in, std::string prefix) {
     std::string name = prefix;
     while (1) {
@@ -38,7 +39,7 @@ std::string parse_alphabetic(std::istream &in, std::string prefix) {
     return name;
 }
 
-expr *parse_num(std::istream &in) {
+PTR(expr)parse_num(std::istream &in) {
     int n = 0;
     bool negative = false;
     if (in.peek() == '-') {
@@ -55,10 +56,10 @@ expr *parse_num(std::istream &in) {
     }
     if (negative)
         n = -n;
-    return new NumExpr(n);
+    return NEW(NumExpr)(n);
 }
 
-expr *parse_var(std::istream &in) {
+PTR(expr)parse_var(std::istream &in) {
     string s = "";
     while (1) {
         int c = in.peek();
@@ -68,24 +69,33 @@ expr *parse_var(std::istream &in) {
         } else
             break;
     }
-    return new VarExpr(s);
+    return NEW(VarExpr)(s);
 }
 
-expr *parse_let(std::istream &in) {
-
-    skip_whitespace(in);
-    string s = "";
-    expr *var = parse_var(in);
-    VarExpr *v = dynamic_cast<VarExpr *>(var);
-    s += v->s;
-    skip_whitespace(in);
-    in.get();
-    skip_whitespace(in);
-    expr *e0 = parse_expr(in);
-    expr *e1 = parse_expr(in);
-    letExpr *let0;
-    let0 = new letExpr(new VarExpr(s), e0, e1);
-    return let0;
+PTR(expr)parse_let(std::istream &in) {
+//    skip_whitespace(in);
+//    string s = "";
+//    PTR(expr)var = parse_var(in);
+//    VarPTR(expr)v = CAST<VarPTR(expr)>(var);
+//    s += v->s;
+//    skip_whitespace(in);
+//    in.get();
+//    skip_whitespace(in);
+//    PTR(expr)e0 = parse_expr(in);
+//    PTR(expr)e1 = parse_expr(in);
+//    letPTR(expr)let0;
+//    let0 = NEW(letExpr)(NEW(VarExpr)(s), e0, e1);
+//    return let0;
+    char c = peek_after_spaces(in);
+    std::string s = "";
+    s += parse_alphabetic(in, s);
+    c = peek_after_spaces(in);
+    c = in.get();
+    c = peek_after_spaces(in);
+    PTR(expr) e = parse_expr(in);
+    PTR(expr) e2 = parse_expr(in);
+    PTR(expr) let = NEW(letExpr)((s), e, e2);
+    return let;
 }
 
 std::string parse_keyword(std::istream &in) {
@@ -100,81 +110,71 @@ std::string parse_keyword(std::istream &in) {
     return name;
 }
 
+//parse method
+PTR(expr)parse(std::istream &in) {
+    PTR(expr)e = parse_expr(in);
+    skip_whitespace(in);
+    char c = in.get();
+    if (!in.eof())
+        throw std::runtime_error((std::string) "end of file at " + c);
+    return e;
+}
 
-expr *parse_expr(std::istream &in) {
-//    expr *e = parse_comparg(in);
-//    char c = peek_after_spaces(in);
-//
-//    if (c == '=') {
-//        c = in.get();
-//        c = in.get();
-//        if (c == '=') {
-//            expr *rhs = parse_expr(in);
-//            e = new EqualExpr (e, rhs);
-//        }
-//    }
-//        return e;
-    expr *e = parse_comparg(in);
+PTR(expr)parse_expr(std::istream &in) {
+
+    PTR(expr)e = parse_comparg(in);
     char c = peek_after_spaces(in);
     if (c == '=') {
         c = in.get();
         c = in.get();
         if (c == '=') {
-            expr *res = parse_expr(in);
-            e = new(EqualExpr)(e, res);
+            PTR(expr)res = parse_expr(in);
+            e = NEW(EqualExpr)(e, res);
         }
     }
     return e;
 }
 
-expr *parse_comparg(std::istream &in) {
-    expr *e = parse_addend(in);
+PTR(expr)parse_comparg(std::istream &in) {
+    PTR(expr)e = parse_addend(in);
 
     char c = peek_after_spaces(in);
     if (c == '+') {
         in >> c;
-        expr *rhs = parse_comparg(in);
-        e = new (AddExpr)(e, rhs);
+        PTR(expr)rhs = parse_comparg(in);
+        e = NEW (AddExpr)(e, rhs);
     }
     return e;
 }
 
-expr *parse_addend(std::istream &in) {
-//    expr *e;
-//    e = parse_multicand(in);
-//    char c = peek_after_spaces(in);
-//    if (c == '*') {
-//        consume(in, '*');
-//        expr *rhs = parse_addend(in);
-//        e =  new MultExpr(e, rhs);
-//    }
-//    return e;
-    expr *e;
+PTR(expr)parse_addend(std::istream &in) {
+
+    PTR(expr)e;
     e = parse_multicand(in);
     skip_whitespace(in);
     int c = in.peek();
     if (c == '*') {
         consume(in, '*');
-        expr *rhs = parse_addend(in);
-        return new MultExpr(e, rhs);
+        PTR(expr)rhs = parse_addend(in);
+        return NEW(MultExpr)(e, rhs);
     } else
         return e;
 }
 
-expr *parse_multicand(std::istream &in) {
-    expr *e = parse_inner(in);
+PTR(expr)parse_multicand(std::istream &in) {
+    PTR(expr)e = parse_inner(in);
 
     while (in.peek() == '(') {
         consume(in, '(');
-        expr *actual_arg = parse_expr(in); // try parse inner
-        consume(in, '(');
-        e = new(CallExpr)(e, actual_arg);
+        PTR(expr)actual_arg = parse_expr(in); // try parse inner
+        e = NEW(CallExpr)(e, actual_arg);
+        consume(in, ')');
     }
     return e;
 }
 
-expr *parse_inner(std::istream &in) {
-    expr *expr;
+PTR(expr)parse_inner(std::istream &in) {
+    PTR(expr)expr;
 
     char c = peek_after_spaces(in);
     if (c == '(') {
@@ -197,11 +197,13 @@ expr *parse_inner(std::istream &in) {
             c = peek_after_spaces(in);
             expr = parse_expr(in);
         } else if (keyword == "_true") {
-            return new(BoolExpr)(true);
+            return NEW(BoolExpr)(true);
         } else if (keyword == "_false") {
-            return new(BoolExpr)(false);
+            return NEW(BoolExpr)(false);
         } else if (keyword == "_if") {
             expr = parse_if(in);
+        } else if (keyword == "_fun" ){
+            expr = parse_fun(in);
         } else {
             throw std::runtime_error((std::string) "unexpected keyword " + keyword);
         }
@@ -211,20 +213,20 @@ expr *parse_inner(std::istream &in) {
     return expr;
 }
 
-expr *parse_if(std::istream &in) {
-    expr *test_case = parse_expr(in);
+PTR(expr)parse_if(std::istream &in) {
+    PTR(expr)test_case = parse_expr(in);
     std::string keyword = parse_keyword(in);
     if (keyword != "_then")
         throw std::runtime_error("expected keyword _then");
-    expr *then_case = parse_expr(in);
+    PTR(expr)then_case = parse_expr(in);
     keyword = parse_keyword(in);
     if (keyword != "_else")
         throw std::runtime_error("expected keyword _else");
-    expr *else_case = parse_expr(in);
-    return new(IfExpr)(test_case, then_case, else_case);
+    PTR(expr)else_case = parse_expr(in);
+    return NEW(IfExpr)(test_case, then_case, else_case);
 }
 
-expr *parse_fun(std::istream &in) {
+PTR(expr)parse_fun(std::istream &in) {
     char c = peek_after_spaces(in);
     if (c != '(') {
         throw std::runtime_error("expected an open parenthesis");
@@ -236,21 +238,12 @@ expr *parse_fun(std::istream &in) {
         throw std::runtime_error("expected a close parenthesis");
     }
     c = in.get();
-    expr* e = parse_expr(in);
-    return new(FunExpr)(variable, e);
+    PTR(expr) e = parse_expr(in);
+    return NEW(FunExpr)(variable, e);
 }
 
 
-expr *parse(std::istream &in) {
-    expr *e = parse_expr(in);
-    skip_whitespace(in);
-    char c = in.get();
-    if (!in.eof())
-        throw std::runtime_error((std::string) "end of file at " + c);
-    return e;
-}
-
-expr *parse_str(std::string s) {
+PTR(expr)parse_str(std::string s) {
     std::istringstream in(s);
     return parse(in);
 }
