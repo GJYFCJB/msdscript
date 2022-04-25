@@ -6,33 +6,33 @@
 #define CS6015PROJECT_VAL_H
 
 #include <string>
-
+#include "pointer.h"
 using namespace std;
 
 class expr;
 
 class Val {
 public:
-    virtual expr* to_expr() = 0;
-    virtual Val* multWith (Val* input) = 0;
-    virtual Val* addTo (Val* input) = 0;
-    virtual bool equals(Val* input) = 0;
+    virtual PTR(expr) to_expr() = 0;
+    virtual PTR(Val) multWith (PTR(Val) input) = 0;
+    virtual PTR(Val) addTo (PTR(Val) input) = 0;
+    virtual bool equals(PTR(Val) input) = 0;
     virtual string to_string() = 0;
     virtual bool is_true() = 0;
-    virtual Val* call(Val* actual_arg) = 0;
+    virtual PTR(Val) call(PTR(Val) actual_arg) = 0;
 };
 
 class NumVal : public Val{
 public:
     int val;
     NumVal(int n);
-    virtual expr* to_expr();
-    virtual Val* addTo (Val* input);
-    virtual Val* multWith (Val* input);
-    virtual bool equals(Val* input) ;
+    virtual PTR(expr) to_expr();
+    virtual PTR(Val) addTo (PTR(Val) input);
+    virtual PTR(Val) multWith (PTR(Val) input);
+    virtual bool equals(PTR(Val) input) ;
     string to_string();
     bool is_true();
-    Val* call(Val* actual_arg);
+    PTR(Val) call(PTR(Val) actual_arg);
 };
 
 class BoolVal : public Val {
@@ -40,29 +40,29 @@ public:
     bool bool_;
 
     BoolVal(bool input);
-    bool equals(Val* val);
+    bool equals(PTR(Val) val);
     bool is_true();
 
-    Val* addTo(Val* other_val);
-    Val* multWith(Val* other_val);
-    expr* to_expr();
+    PTR(Val) addTo(PTR(Val) other_val);
+    PTR(Val) multWith(PTR(Val) other_val);
+    PTR(expr) to_expr();
     string to_string();
-    Val* call(Val* actual_arg);
+    PTR(Val) call(PTR(Val) actual_arg);
 };
 
 class FunVal : public Val {
 public:
     std::string formal_arg;
-    expr* body;
+    PTR(expr) body;
 
-    FunVal(std::string arg, expr* body);
-    bool equals(Val* val);
+    FunVal(std::string arg, PTR(expr) body);
+    bool equals(PTR(Val) val);
     bool is_true();
 
-    Val* addTo(Val* other_val);
-    Val* multWith(Val* other_val);
-    Val* call(Val* actual_arg);
-    expr* to_expr();
+    PTR(Val) addTo(PTR(Val) other_val);
+    PTR(Val) multWith(PTR(Val) other_val);
+    PTR(Val) call(PTR(Val) actual_arg);
+    PTR(expr) to_expr();
     std::string to_string();
 };
 

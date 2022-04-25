@@ -5,6 +5,7 @@
 #ifndef expr_hpp
 #define expr_hpp
 
+#include "pointer.h"
 #include <stdio.h>
 #include <iostream>
 #include <string>
@@ -27,10 +28,10 @@ public:
     /*The value of a number is the number
 The value of an addition expression is the sum of the subexpression values
 The value of a multiplication expression is the product of the subexpression values*/
-    virtual Val* interp() = 0;
-    virtual bool equals(expr *e) = 0;
+    virtual PTR(Val) interp() = 0;
+    virtual bool equals(PTR(expr)e) = 0;
     virtual bool has_variable() = 0;
-    virtual expr* subst(string s1, Val *val) = 0;
+    virtual PTR(expr) subst(string s1, PTR(Val)val) = 0;
     virtual void print(ostream &out) = 0;
     virtual void pretty_print(ostream &out);
     virtual void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
@@ -41,13 +42,13 @@ The value of a multiplication expression is the product of the subexpression val
 class NumExpr : public expr {
 public:
     int rep;
-    Val* val;
+    PTR(Val) val;
 
     NumExpr(int val) ;
-    bool equals(expr *e);
-    Val * interp();
+    bool equals(PTR(expr)e);
+    PTR(Val) interp();
     bool has_variable();
-    expr* subst(string s1, Val *val);
+    PTR(expr) subst(string s1, PTR(Val)val);
     void print(ostream &out);
     void pretty_print(ostream &out);
     void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
@@ -55,14 +56,14 @@ public:
 
 class AddExpr : public expr {
 public:
-    expr *lhs;
-    expr *rhs;
+    PTR(expr)lhs;
+    PTR(expr)rhs;
 
-    AddExpr(expr *lhs, expr *rhs);
-    bool equals(expr *e);
-    Val* interp();
+    AddExpr(PTR(expr)lhs, PTR(expr)rhs);
+    bool equals(PTR(expr)e);
+    PTR(Val) interp();
     bool has_variable();
-    expr* subst(string s1, Val *val);
+    PTR(expr) subst(string s1, PTR(Val)val);
     void print(ostream &out);
     void pretty_print(ostream &out);
     void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
@@ -71,14 +72,14 @@ public:
 
 class MultExpr : public expr {
 public:
-    expr *lhs;
-    expr *rhs;
+    PTR(expr)lhs;
+    PTR(expr)rhs;
 
-    MultExpr(expr* lhs, expr *rhs);
-    bool equals(expr *e);
-    Val* interp();
+    MultExpr(PTR(expr) lhs, PTR(expr)rhs);
+    bool equals(PTR(expr)e);
+    PTR(Val) interp();
     bool has_variable();
-    expr* subst(string s1, Val *val);
+    PTR(expr) subst(string s1, PTR(Val)val);
     void print(ostream &out);
     void pretty_print(ostream &out);
     void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
@@ -90,10 +91,10 @@ public:
     string s;
 
     VarExpr(string input);
-    bool equals(expr *e);
-    Val* interp();
+    bool equals(PTR(expr)e);
+    PTR(Val) interp();
     bool has_variable();
-    expr* subst(string s1, Val *val);
+    PTR(expr) subst(string s1, PTR(Val)val);
     void print(ostream &out);
     void pretty_print(ostream &out);
     void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
@@ -102,15 +103,15 @@ public:
 
 class letExpr : public expr{
 public:
-    VarExpr* variable;
-    expr* rhs;
-    expr* body;
+    string variable;
+    PTR(expr) rhs;
+    PTR(expr) body;
 
-    letExpr(VarExpr* variable, expr* rhs, expr* body);
-    bool equals(expr *e);
-    Val* interp();
+    letExpr(string variable, PTR(expr) rhs, PTR(expr) body);
+    bool equals(PTR(expr)e);
+    PTR(Val) interp();
     bool has_variable();
-    expr* subst(string s1, Val *val);
+    PTR(expr) subst(string s1, PTR(Val)val);
     void print(ostream &out);
     void pretty_print(ostream &out);
     void pretty_print_at(ostream &out,precedence_t p,bool isLeftInside,bool isNested,int occupy);
@@ -122,46 +123,46 @@ public:
     bool var;
 
     BoolExpr(bool var);
-    bool equals(expr* expr);
+    bool equals(PTR(expr) expr);
     bool has_variable();
-    expr* subst(string s1, Val *val);
+    PTR(expr) subst(string s1, PTR(Val)val);
     virtual std::string to_string();
     /*The value of a number is the number
     The value of an addition expression is the sum of the subexpression values
     The value of a multiplication expression is the product of the subexpression values*/
-    Val* interp();
+    PTR(Val) interp();
     void print(ostream &out);
 
 };
 
 class EqualExpr : public expr {
 public:
-    expr* lhs;
-    expr* rhs;
+    PTR(expr) lhs;
+    PTR(expr) rhs;
 
-    EqualExpr(expr* lhs, expr* rhs);
-    bool equals(expr* other_expr);
+    EqualExpr(PTR(expr) lhs, PTR(expr) rhs);
+    bool equals(PTR(expr) other_expr);
     bool has_variable();
 
-    expr* subst(string s1, Val* val);
+    PTR(expr) subst(string s1, PTR(Val) val);
     virtual std::string to_string();
-    Val* interp();
+    PTR(Val) interp();
     void print(ostream &out);
 };
 
 class IfExpr : public expr {
 public:
-    expr*  test_part;
-    expr*  then_part;
-    expr*  else_part;
+    PTR(expr)  test_part;
+    PTR(expr)  then_part;
+    PTR(expr)  else_part;
 
-    IfExpr(expr* test_part, expr* then_part, expr* else_part);
-    bool equals(expr* other_expr);
+    IfExpr(PTR(expr) test_part, PTR(expr) then_part, PTR(expr) else_part);
+    bool equals(PTR(expr) other_expr);
     bool has_variable();
 
-    expr* subst(std::string var, Val* val);
+    PTR(expr) subst(std::string var, PTR(Val) val);
     virtual std::string to_string();
-    Val* interp();
+    PTR(Val) interp();
     void print(ostream &out);
 
 };
@@ -169,27 +170,27 @@ public:
 class FunExpr : public expr {
 public:
     std::string formal_arg;
-    expr* body;
+    PTR(expr) body;
 
-    FunExpr(std::string arg, expr* body);
-    bool equals(expr* other_expr);
+    FunExpr(std::string arg, PTR(expr) body);
+    bool equals(PTR(expr) other_expr);
     bool has_variable();
-    Val* interp();
-    expr* subst(std::string var, Val* val);
+    PTR(Val) interp();
+    PTR(expr) subst(std::string var, PTR(Val) val);
     std::string to_string();
     void print(ostream &out);
 };
 
 class CallExpr : public expr {
 public:
-    expr* to_be_called;
-    expr* actual_arg;
+    PTR(expr) to_be_called;
+    PTR(expr) actual_arg;
 
-    CallExpr(expr* to_be, expr* actual);
-    bool equals(expr* other_expr);
+    CallExpr(PTR(expr) to_be, PTR(expr) actual);
+    bool equals(PTR(expr) other_expr);
     bool has_variable();
-    Val* interp();
-    expr* subst(std::string var, Val* val);
+    PTR(Val) interp();
+    PTR(expr) subst(std::string var, PTR(Val) val);
     std::string to_string();
     void print(ostream &out);
 };
