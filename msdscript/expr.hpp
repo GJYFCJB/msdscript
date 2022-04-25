@@ -22,15 +22,17 @@ typedef enum {
     prec_mult       // = 3
 } precedence_t;
 class Val;
+class Env;
 class expr{
 public:
 
     /*The value of a number is the number
 The value of an addition expression is the sum of the subexpression values
 The value of a multiplication expression is the product of the subexpression values*/
-    virtual PTR(Val) interp() = 0;
+    virtual PTR(Val) interp(PTR(Env) env) = 0;
     virtual bool equals(PTR(expr)e) = 0;
     virtual bool has_variable() = 0;
+    //ignore as we have added environment class
     virtual PTR(expr) subst(string s1, PTR(Val)val) = 0;
     virtual void print(ostream &out) = 0;
     virtual void pretty_print(ostream &out);
@@ -46,7 +48,7 @@ public:
 
     NumExpr(int val) ;
     bool equals(PTR(expr)e);
-    PTR(Val) interp();
+    PTR(Val) interp(PTR(Env) env);
     bool has_variable();
     PTR(expr) subst(string s1, PTR(Val)val);
     void print(ostream &out);
@@ -61,7 +63,7 @@ public:
 
     AddExpr(PTR(expr)lhs, PTR(expr)rhs);
     bool equals(PTR(expr)e);
-    PTR(Val) interp();
+    PTR(Val) interp(PTR(Env) env);
     bool has_variable();
     PTR(expr) subst(string s1, PTR(Val)val);
     void print(ostream &out);
@@ -77,7 +79,7 @@ public:
 
     MultExpr(PTR(expr) lhs, PTR(expr)rhs);
     bool equals(PTR(expr)e);
-    PTR(Val) interp();
+    PTR(Val) interp(PTR(Env) env);
     bool has_variable();
     PTR(expr) subst(string s1, PTR(Val)val);
     void print(ostream &out);
@@ -92,7 +94,7 @@ public:
 
     VarExpr(string input);
     bool equals(PTR(expr)e);
-    PTR(Val) interp();
+    PTR(Val) interp(PTR(Env) env);
     bool has_variable();
     PTR(expr) subst(string s1, PTR(Val)val);
     void print(ostream &out);
@@ -109,7 +111,7 @@ public:
 
     letExpr(string variable, PTR(expr) rhs, PTR(expr) body);
     bool equals(PTR(expr)e);
-    PTR(Val) interp();
+    PTR(Val) interp(PTR(Env) env);
     bool has_variable();
     PTR(expr) subst(string s1, PTR(Val)val);
     void print(ostream &out);
@@ -130,7 +132,7 @@ public:
     /*The value of a number is the number
     The value of an addition expression is the sum of the subexpression values
     The value of a multiplication expression is the product of the subexpression values*/
-    PTR(Val) interp();
+    PTR(Val) interp(PTR(Env) env);
     void print(ostream &out);
 
 };
@@ -146,7 +148,7 @@ public:
 
     PTR(expr) subst(string s1, PTR(Val) val);
     virtual std::string to_string();
-    PTR(Val) interp();
+    PTR(Val) interp(PTR(Env) env);
     void print(ostream &out);
 };
 
@@ -162,7 +164,7 @@ public:
 
     PTR(expr) subst(std::string var, PTR(Val) val);
     virtual std::string to_string();
-    PTR(Val) interp();
+    PTR(Val) interp(PTR(Env) env);
     void print(ostream &out);
 
 };
@@ -175,7 +177,7 @@ public:
     FunExpr(std::string arg, PTR(expr) body);
     bool equals(PTR(expr) other_expr);
     bool has_variable();
-    PTR(Val) interp();
+    PTR(Val) interp(PTR(Env) env);
     PTR(expr) subst(std::string var, PTR(Val) val);
     std::string to_string();
     void print(ostream &out);
@@ -189,7 +191,7 @@ public:
     CallExpr(PTR(expr) to_be, PTR(expr) actual);
     bool equals(PTR(expr) other_expr);
     bool has_variable();
-    PTR(Val) interp();
+    PTR(Val) interp(PTR(Env) env);
     PTR(expr) subst(std::string var, PTR(Val) val);
     std::string to_string();
     void print(ostream &out);

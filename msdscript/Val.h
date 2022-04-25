@@ -10,7 +10,7 @@
 using namespace std;
 
 class expr;
-
+class Env;
 class Val {
 public:
     virtual PTR(expr) to_expr() = 0;
@@ -54,8 +54,9 @@ class FunVal : public Val {
 public:
     std::string formal_arg;
     PTR(expr) body;
+    PTR(Env) env;
 
-    FunVal(std::string arg, PTR(expr) body);
+    FunVal(std::string arg, PTR(expr) body, PTR(Env) env);
     bool equals(PTR(Val) val);
     bool is_true();
 
