@@ -46,7 +46,7 @@ int use_arguments(int argc, char **argv){
             else if(argv[i] == s3){
                 try{
                 PTR(expr) e = parse(std::cin);
-                cout<<e->interp(NEW(EmptyEnv)())->to_expr()->to_string()<<endl;
+                cout<<e->interp(NEW(EmptyEnv)())->to_string()<<endl;
                 exit(0);}catch (runtime_error exn){
                     std::cerr << exn.what() << "\n";
                     return 1;
@@ -491,41 +491,7 @@ TEST_CASE("Parse"){
     CHECK( parse_str(" 1 + (2 * 3)")
                    ->equals(NEW(AddExpr)(NEW(NumExpr)(1), NEW(MultExpr)(NEW(NumExpr)(2), NEW(NumExpr)(3)))));
 
-    //parse let
-//    PTR(expr) l0 = NEW(letExpr)(("x"),
-//                           NEW(NumExpr)(4),
-//                           NEW(AddExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(1)));
-//    CHECK( parse_str("let x = 4\n_in x + 1")->equals(l0));
-//
-//
-//    PTR(expr) l1 = NEW(AddExpr)(NEW(letExpr)(("x"), NEW(NumExpr)(7), NEW(VarExpr)("x")),
-//                           NEW(NumExpr)(9));
-//    CHECK(parse_str("(let x = 7\n _in x) + 9")->equals(l1));
-//
-//    PTR(expr) l2 = NEW(AddExpr) (NEW(MultExpr)(NEW(NumExpr)(7),
-//                                         NEW(letExpr)(("x"), NEW(NumExpr)(9), NEW(VarExpr)("x"))),
-//                            NEW(NumExpr)(3));
-//
-//    CHECK(parse_str("7 * (let x = 9\n     _in x) + 3")->equals(l2));
-//
-//    PTR(expr) l3 = NEW(letExpr)(("x"),
-//                           NEW(NumExpr)(7),
-//                           NEW(letExpr)(("x"), NEW(NumExpr)(2),
-//                                       NEW(AddExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(2))));
-//    cout << l3->to_string();
-//    CHECK(parse_str("let x = 7\n_in let x = 2\n  _in x + 2")->equals(l3));
-//    CHECK(parse_str("(7 + (let x = let x = 2 _in x + 3 _in x + 3)) * 6")->equals(NEW(MultExpr)(NEW(AddExpr)(NEW(NumExpr)(7),
-//                                                                                                            NEW(letExpr)(("x"),
-//                                                                                                                        NEW(letExpr)(("x"),
-//                                                                                                                                    NEW(NumExpr)(2),
-//                                                                                                                                    NEW(AddExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(3))),
-//                                                                                                                        NEW(AddExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(3)))),
-//                                                                                                NEW(NumExpr)(6))));
-//
-//    CHECK( parse_str("letExpr x = letExpr x = 7 _in x + 2 _in x + 2")->equals(NEW(letExpr)(("x"),
-//                                                                                    NEW(letExpr)(("x"), NEW(NumExpr)(7),
-//                                                                                                NEW(AddExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(2))),
-//                                                                                    NEW(AddExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(2)))));
+
 }
 
 TEST_CASE("BoolVal"){
@@ -543,8 +509,8 @@ TEST_CASE("BoolVal"){
 
     //test to_string
 
-    CHECK(b0->to_string() == "true");
-    CHECK(b1->to_string() == "false");
+    CHECK(b0->to_string() == "_true");
+    CHECK(b1->to_string() == "_false");
 }
 
 TEST_CASE("BoolExpr"){
@@ -555,6 +521,7 @@ TEST_CASE("BoolExpr"){
                 ->equals(NEW (BoolExpr)(false)));
         CHECK(!(NEW(BoolExpr)(true))
                 ->equals(NULL));
+//        CHECK((NEW(NumExpr)(3)->equals(NEW(NumExpr)(4))) == NEW(BoolExpr)(true));
     }
 
     SECTION("interp") {
@@ -748,5 +715,44 @@ TEST_CASE("CallExpr"){
     SECTION("to_string"){
         CHECK( (NEW(CallExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(3)))->to_string()
                == ", (x(3))");
+    }
+}
+
+TEST_CASE("Funval"){
+
+    SECTION( "equals" ) {
+        CHECK( (NEW(FunVal)("x", NEW(NumExpr)(1), NEW(EmptyEnv)()))
+                       ->equals(NEW(FunVal)("x", NEW(NumExpr)(1), NEW(EmptyEnv)())) );
+        CHECK( ! (NEW(FunVal)("y", NEW(NumExpr)(1), NEW(EmptyEnv)()))
+                ->equals(NEW(FunVal)("x", NEW(NumExpr)(1), NEW(EmptyEnv)())) );
+        CHECK( ! (NEW(FunVal)("x", NEW(NumExpr)(1), NEW(EmptyEnv)()))
+                ->equals(NEW(FunVal)("x", NEW(NumExpr)(4), NEW(EmptyEnv)())) );
+        CHECK( ! (NEW(FunVal)("x", NEW(NumExpr)(1), NEW(EmptyEnv)()))
+                ->equals(NEW(NumVal)(5)));
+    }
+
+    SECTION( "addTo" ) {
+        CHECK_THROWS_WITH ( (NEW(FunVal)("x", NEW(NumExpr)(1),NEW(EmptyEnv)()))->addTo(NEW(NumVal)(1)),
+                            "no adding functions");
+    }
+
+    SECTION( "mult" ) {
+        CHECK_THROWS_WITH( (NEW(FunVal)("x", NEW(NumExpr)(1), NEW(EmptyEnv)()))->multWith(NEW(NumVal)(1)),
+                           "no multiplying functions");
+    }
+
+    SECTION( "to_string" ) {
+        CHECK( (NEW(FunVal)("x", NEW(NumExpr)(1), NEW(EmptyEnv)()))->to_string()
+               == "_fun (x) 1" );
+    }
+
+    SECTION( "is_true" ) {
+        CHECK_THROWS_WITH( (NEW(FunVal)("x", NEW(NumExpr)(1), NEW(EmptyEnv)()))->is_true(),
+                           "functions' true/false makes no sense");
+    }
+
+    SECTION( "call" ) {
+        CHECK( (NEW(FunVal)("x", NEW(NumExpr)(1), NEW(EmptyEnv)()))->call(NEW(NumVal)(1))
+                       ->equals(NEW(NumVal)(1)));
     }
 }

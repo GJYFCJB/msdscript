@@ -10,3 +10,4 @@ make
 /msdscript/main.o
 /msdscript/expr.o
 /msdscript/msdscript
+a.out

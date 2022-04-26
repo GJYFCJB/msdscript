@@ -73,29 +73,19 @@ PTR(expr)parse_var(std::istream &in) {
 }
 
 PTR(expr)parse_let(std::istream &in) {
-//    skip_whitespace(in);
-//    string s = "";
-//    PTR(expr)var = parse_var(in);
-//    VarPTR(expr)v = CAST<VarPTR(expr)>(var);
-//    s += v->s;
-//    skip_whitespace(in);
-//    in.get();
-//    skip_whitespace(in);
-//    PTR(expr)e0 = parse_expr(in);
-//    PTR(expr)e1 = parse_expr(in);
-//    letPTR(expr)let0;
-//    let0 = NEW(letExpr)(NEW(VarExpr)(s), e0, e1);
-//    return let0;
-    char c = peek_after_spaces(in);
-    std::string s = "";
-    s += parse_alphabetic(in, s);
-    c = peek_after_spaces(in);
-    c = in.get();
-    c = peek_after_spaces(in);
-    PTR(expr) e = parse_expr(in);
-    PTR(expr) e2 = parse_expr(in);
-    PTR(expr) let = NEW(letExpr)((s), e, e2);
-    return let;
+    skip_whitespace(in);
+    string s = "";
+    PTR(expr)var = parse_var(in);
+    s += var->to_string();
+    skip_whitespace(in);
+    in.get();
+    skip_whitespace(in);
+    PTR(expr)e0 = parse_expr(in);
+    PTR(expr)e1 = parse_expr(in);
+    PTR(letExpr)let0;
+    let0 = NEW(letExpr)((s), e0, e1);
+    return let0;
+
 }
 
 std::string parse_keyword(std::istream &in) {
@@ -104,6 +94,18 @@ std::string parse_keyword(std::istream &in) {
     while (1) {
         char c = in.peek();
         if (!isalpha(c))
+            break;
+        name += in.get();
+    }
+    return name;
+}
+
+std::string parse_equal(std::istream &in) {
+    in.get(); // consume `_`
+    std::string name = "=";
+    while (1) {
+        char c = in.peek();
+        if (isalpha(c) || isxdigit(c) || isspace(c))
             break;
         name += in.get();
     }
@@ -125,9 +127,7 @@ PTR(expr)parse_expr(std::istream &in) {
     PTR(expr)e = parse_comparg(in);
     char c = peek_after_spaces(in);
     if (c == '=') {
-        c = in.get();
-        c = in.get();
-        if (c == '=') {
+        if (parse_equal(in) == "==") {
             PTR(expr)res = parse_expr(in);
             e = NEW(EqualExpr)(e, res);
         }
@@ -185,7 +185,8 @@ PTR(expr)parse_inner(std::istream &in) {
             c = in.get();
         } else
             throw std::runtime_error("parenthesis need to be closed");
-    } else if (c == '-' || isdigit(c)) {
+    }
+    else if (c == '-' || isdigit(c)) {
         expr = parse_num(in);
     } else if (isalpha(c)) {
         expr = parse_var(in);
@@ -207,7 +208,8 @@ PTR(expr)parse_inner(std::istream &in) {
         } else {
             throw std::runtime_error((std::string) "unexpected keyword " + keyword);
         }
-    } else {
+    }
+    else {
         throw std::runtime_error((std::string) "expected a digit or open parenthesis at " + c);
     }
     return expr;
@@ -247,6 +249,7 @@ PTR(expr)parse_str(std::string s) {
     std::istringstream in(s);
     return parse(in);
 }
+
 
 
 

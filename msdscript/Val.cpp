@@ -19,9 +19,9 @@ PTR(Val) NumVal::addTo (PTR(Val) input){
 bool NumVal::equals(PTR(Val) input){
     PTR(NumVal)t = CAST(NumVal)(input);
     if (t == NULL)
-        return false;
+        return NEW(BoolVal)(false)->bool_;
     else
-        return (this->val == t->val);
+        return NEW(BoolVal)((this->val == t->val)) -> bool_;
 }
 
 PTR(Val) NumVal::multWith (PTR(Val) input){
@@ -82,8 +82,8 @@ PTR(expr) BoolVal::to_expr(){
 }
 
 string BoolVal::to_string() {
-    if(bool_) return "true";
-    else return "false";
+    if(bool_) return "_true";
+    else return "_false";
 }
 
 PTR(Val) BoolVal::call(PTR(Val) actual_arg){
