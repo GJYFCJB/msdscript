@@ -1,6 +1,8 @@
 ## MSDScript Description
 
-The MSDScript is a programming language interpreter implemented by C++. It has some basic features like JavaScript and we can execute it through command line. Below are some features:
+The MSDScript is a programming language interpreter implemented by C++. It has some basic features like JavaScript and we can execute it through command line. 
+
+### Features:
 
 Addition
 Multiplication
@@ -10,6 +12,31 @@ Human language parsing
 Variable bind
 If/else conditions
 Function execution
+
+### Grammer:
+```
+<expr> = <comparg>
+		| <comparg> == <expr>
+
+<comparg> = <addend>
+		| <addend> + <comparg>
+
+<addend> = <multicand>
+		| <multicand> * <addend>
+
+<multicand> = <inner>
+		| <multicand> ( <expr> )
+
+<inner> = <number>
+		| ( <expr> )
+		| <variable>
+		| _let <variable> = <expr> _in <expr>
+		| _true
+		| _false
+		| _if <expr> _then <expr> _else <expr>
+		| _fun ( <variable> ) <expr>
+```
+The precedence of the operators is `==`, `+`, `*`, `_bool`,`if/else`,`function`. (from low precedence to high).
 
 ## Build and Installation Instructions
 
@@ -39,16 +66,19 @@ Valid: `1+2` or `1 + 2` or `1    +      2`.<br>
 Invalid: `2,000 + 7.5` or `4 000 + 10`.<br>
 
 #### Variables
-Variables' input rule like other languages as C++, variables are valid for any combinations of character but invalid for starting of digit or _.<br>
+Variables' input rule like other languages as C++, variables are valid for any combinations of character between 'a - z' and 'A - Z' but invalid for starting of digit or _.<br>
 Examples:<br>
-Valid: `x1` or `abc` or `string_`.<br>
+Valid: `x1` or `abc` or `string`.<br>
 Invalid: `1x` or `_x`.<br>
 
 #### Booleans
-Booleans is represented as  `_true` or `false`.
+Booleans is represented as  `_true` or `_false`.
 
 #### Addition and Multiplication
-Addition and Multiplication are represented as  `+` and `*`.
+Addition and Multiplication are represented as  `+` and `*`.<br>
+****Note**** : the subexpressions of `+` and `*` must produce numbers like `1 + 2` or `1 * 2` instead of `x + 1` or `x * 1`.<br>
+While the Comparison as `==` can compare variable and number and return true or false.
+In the MSDScript we use `EqualExpr` expressions to represent `==`. We will talk about in the API part.
 
 #### Comparison
 Comparison is represented as  `==`.
@@ -78,7 +108,9 @@ _in  (_let y = 3
 ```
 #### Functions and calls 
 Functions are represented by the `_fun` keyword.<br>
+Like JavaScript, everything is derived from the prototypes, the MSDScript expressions are derived from one class, so the function is same type as value and number.<br>
 The left part as `()`should be variables and follwing will be the function body.<br>
+The first subexpression of a function-call must have a function value so the definiltion like `_fun() x + 1` is invalid.<br>
 Examples:<br>
 `_fun (x) x + 1` creates function that add 1 to value x.<br>
 
@@ -107,47 +139,59 @@ The helper files help configure the msdscript and build user interface.<br>
 
 `Catch.cpp`: This framework will execute when doing testing. 
 
-## MSDScript Expressions and Grammer 
+## MSDScript Expressions
 The Expressions mean all the features that MSDScript have.<br>
 Grammer means parsing with conditions and comparisons.<br>
 Expressions:<br>
 ```
-<expr> = <number>
-       | <boolean>
-       | <expr> == <expr>
-       | <expr> + <expr>
-       | <expr> * <expr>
-       | <variable>
-       | _let <variable> = <expr> _in <expr>
-       | _if <expr> _then <expr> _else <expr>
+<expr> = <NumExpr>
+       | <BoolExpr>
+       | <expr> == <expr> (EqualExpr)
+       | <expr> + <expr> (AddExpr)
+       | <expr> * <expr> (MultExpr)
+       | <VarExpr>
+       | _let <variable> = <expr> _in <expr> (LetExpr)
+       | _if <expr> _then <expr> _else <expr> (IfExpr)
+       | _fun(<VarExpr>)<expr> (FunExpr)
+       | <expr>(<expr>)
        
 <Val> = <number>
       | <boolean>
-      | <function>     
+      | _fun(〈variable〉)〈expr〉    
 ```
-Grammer:<br>
+### expr
+expr is the basic class of MSDScipt, all the expressions are derived(or inherited)from this class.
+That is why the function, value, and number expressions can be treated as the same type of 'variable'. Not like C++, we can operate functions like numbers!<br>
+The types or the subclass of expr is shown before.
+
+### Parse
+When you run MSDScript in the interp pattern, the MSDScript will implement the `parse` class to formate input and translate it to MSDScript expressions which can be executed by the Script.<br>
+Below are some key method of wrapping user's input:<br>
+`PTR(expr)parse(std::istream &in) ` Extract the input stream, parses it, and returns the entire input as an expr. <br>
+Like the grammer shown before, MSDScipt will parse the input like 'recursion', so the method 'linkedlist' is: <br>
 ```
-<expr> = <comparg>
-		| <comparg> == <expr>
-
-<comparg> = <addend>
-		| <addend> + <comparg>
-
-<addend> = <multicand>
-		| <multicand> * <addend>
-
-<multicand> = <inner>
-		| <multicand> ( <expr> )
-
-<inner> = <number>
-		| ( <expr> )
-		| <variable>
-		| _let <variable> = <expr> _in <expr>
-		| _true
-		| _false
-		| _if <expr> _then <expr> _else <expr>
-		| _fun ( <variable> ) <expr>
+`PTR(expr)parse_expr(std::istream &in)`  // parse '==' 
+		|	
+`PTR(expr)parse_comparg(std::istream &in)` // parse '+'
+		|
+`PTR(expr)parse_addend(std::istream &in)` // parse '*'
+		|
+`PTR(expr)parse_multicand(std::istream &in)` // parse 'inner function' like _let, _boolean and _fun
+		|
+`PTR(expr)parse_inner(std::istream &in)`
 ```
+For the inner part, MSDSCript implement the help method like `PTR(expr)parse_if(std::istream &in)` and `PTR(expr)parse_fun(std::istream &in)` to help parse the expression.<br>
+The return type of parse is always an expr.
+
+#### Interpreting Expressions
+`interp` is to find the value of an expression and this method return a new class Val which can be convert to a string so the MSDScript will response after calling function or expersions.<br>
+The implement of parse and interp is 
+```
+PTR(expr) e = parse(std::cin);
+cout<<e->interp(NEW(EmptyEnv)())->to_string()<<endl;
+```
+Below is example: <br>
+<img width="346" alt="image" src="https://user-images.githubusercontent.com/89375316/165440058-06f52d10-6745-455d-9a6a-7b4a3ce5732a.png">
 
 
 
